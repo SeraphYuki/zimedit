@@ -2739,7 +2739,7 @@ static void AddCharacters(Thoth_Editor *t, Thoth_EditorCmd *c){
 		for(k = into; k < t->cursors[0].pos; k++, tabs++){
 			if(t->file->text[k] != '\t') break;
 		}
-		if(k == t->cursors[0].pos) {
+		if(k == t->cursors[0].pos && tabs > 0) {
 			int index = 0;
 			RemoveStrFromText(t,&index,1);
 			t->cursors[0].savedText = malloc(2);
