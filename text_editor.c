@@ -1526,6 +1526,10 @@ static void Paste(Thoth_Editor *t, Thoth_EditorCmd *c){
 		if(clipboard[k] == '\n') lines++;
 	}
 
+
+#ifdef SDL_COMPILE
+	lines--;
+#endif
 	if(lines == t->nCursors){
 		
 		int curline = 0;
