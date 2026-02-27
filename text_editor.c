@@ -1502,7 +1502,7 @@ static void Paste(Thoth_Editor *t, Thoth_EditorCmd *c){
 	t->clipboard = malloc(strlen(temp)+1);
 	strcpy(t->clipboard, temp);
 	SDL_free(temp);
-#elif
+#else
 #ifdef LINUX_COMPILE
 	X11_Paste(&t->clipboard);
 #endif

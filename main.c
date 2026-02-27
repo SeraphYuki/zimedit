@@ -297,7 +297,7 @@ int main(int argc, char **argv){
 	        frameTime = (currTime - lastSecond) / (float)frames;
 	        lastSecond = currTime;
 	        frames = 0;
-		    printf("fps: %i | ms: %f\n", fps, frameTime);
+		    //printf("fps: %i | ms: %f\n", fps, frameTime);
 	    }
 
 	    ++frames;
