@@ -4367,8 +4367,9 @@ void Thoth_Editor_Event(Thoth_Editor *t, unsigned int key){
 		    char cmdbuffer[512]; 
 			printf("\033[H\033[2J");
 		    sprintf(cmdbuffer, "%s",t->cfg->makecmd);
-
+#ifndef SDL_COMPILE
 			endwin();
+#endif
 		    if(t->loggingText) free(t->loggingText);
 		    t->loggingText = NULL;
 
