@@ -1164,6 +1164,7 @@ static void SwitchFile(Thoth_Editor *t, Thoth_EditorCmd *c){
 	t->logIndex = 0;
 	StartLogging(t, THOTH_LOGMODE_SWITCH_FILE);
 }
+
 static void SaveAsFile(Thoth_Editor *t, Thoth_EditorCmd *c){
 	EndLogging(t);
 	t->loggingText = malloc(strlen(t->fileBrowser.directory)+1);
@@ -1218,6 +1219,7 @@ static int GetStartOfNextLine(char *text, int textLen, int cPos){
 	for(k = cPos; k < textLen; k++)
 		if(text[k] == '\n') { k++; break; }
 
+	if(k == textLen) k++;
 	return k;
 }
 
@@ -1837,11 +1839,28 @@ static void UndoIndentLine(Thoth_Editor *t, Thoth_EditorCmd *c){
 static void ToggleCommentMulti(Thoth_Editor *t, Thoth_EditorCmd *c){
 
 	if(!t->file->text) return;
+	if(t->nCursors > 1) return;
 	
 	t->file->textLen = strlen(t->file->text);
-	
 	LoadCursors(t,c);
-	if(t->cursors[0].selection.len == 0) return;
+
+
+	int k = 0;
+	if(t->cursors[0].selection.len == 0){
+		if(t->cursors[0].pos >= 2){
+			if(strncmp(&t->file->text[t->cursors[0].pos-2],"/**/",4) == 0){
+				t->cursors[0].pos += 2;
+				RemoveStrFromText(t, &k, 4);
+				SaveCursors(t,c);
+				return;
+			}
+		}
+		
+		AddStrToText(t, &k, "/**/");
+		t->cursors[0].pos -= 2;
+		SaveCursors(t,c);
+		return;
+	}
 
 	int startSelection = t->cursors[0].selection.startCursorPos;
 
@@ -1851,7 +1870,6 @@ static void ToggleCommentMulti(Thoth_Editor *t, Thoth_EditorCmd *c){
 	int endSelection = (t->cursors[0].selection.startCursorPos+t->cursors[0].selection.len);
 
 
-	int k = 0;
 	int m;
 	for(m = startSelection; m < endSelection; m++){
 		
@@ -1881,7 +1899,7 @@ static void ToggleCommentMulti(Thoth_Editor *t, Thoth_EditorCmd *c){
 	} else {
 		AddStrToText(t, &k, "*/");
 		t->cursors[0].selection.len+=2;
-			endSelection+=2;
+		endSelection+=2;
 		m += 2;
 	}
 
@@ -2171,9 +2189,9 @@ static void Copy(Thoth_Editor *t, Thoth_EditorCmd *c){
 #ifdef SDL_COMPILE
 		SDL_SetClipboardText(t->clipboard);
 #elif LINUX_COMPILE
-		free(buffer);
 		X11_Copy(&t->clipboard);
 #endif 
+
 	}
 }
 
@@ -2423,10 +2441,10 @@ static void AutoComplete(Thoth_Editor *t){
 
 	t->autoCompleteLen = 0;
 	if(t->autoCompleteSearchLen > 0 && t->nCursors == 1){
-
 		if(t->autoCompleteSearchLen > THOTH_MAX_AUTO_COMPLETE_STRLEN) return;
 
 		Thoth_EditorCur *c = &t->cursors[t->nCursors-1];
+
 
 		if(t->autoCompleteSearchLen > 3 && t->autoCompleteSearchLen < THOTH_MAX_AUTO_COMPLETE_STRLEN){
 
@@ -2457,11 +2475,12 @@ static void AutoComplete(Thoth_Editor *t){
 						break;
 					}
 				}
-
 				if(m != t->autoCompleteLen) {
 					findEnd += res + j;
 					continue;
 				}
+
+
 
 				t->autoComplete[t->autoCompleteLen].offset = findEnd+res;
 				t->autoComplete[t->autoCompleteLen].len = j;
@@ -2778,8 +2797,10 @@ static void ExpandAddCharacters(Thoth_Editor *t, Thoth_EditorCmd *c){
 	char *keys = &c->keys[c->num];
 	c->num = strlen(c->keys);
 
+
 	// make sure autocomplete only starts after a token, if canceled.
-	if(t->autoCompleteSearchLen > 0 || IsToken(t->file->text[t->cursors[0].pos-1])){
+	if(t->autoCompleteSearchLen > 0 || (t->cursors[0].pos > 0 &&
+		IsToken(t->file->text[t->cursors[0].pos-1]))){
 		for(k = 0; k < strlen(keys); k++){
 			if(!IsToken(keys[k])){
 				t->autoCompleteSearchLen++;
@@ -3303,7 +3324,7 @@ void Thoth_Editor_Init(Thoth_Editor *t,Thoth_Config *cfg){
 	init_pair(THOTH_COLOR_LOG_UNSELECTED, COLOR_BLACK, COLOR_WHITE);
 	init_pair(THOTH_COLOR_CURSOR,COLOR_BLACK ,COLOR_MAGENTA);
 	init_pair(THOTH_COLOR_FIND, COLOR_BLACK ,COLOR_WHITE);
-	init_pair(THOTH_COLOR_LINE_NUM, COLOR_WHITE ,COLOR_BLACK);
+	init_pair(THOTH_COLOR_LINE_NUM, COLOR_WHITE ,-1);
 	init_pair(THOTH_COLOR_LINENUM_CURSOR, COLOR_BLACK ,COLOR_GREEN);
 	init_pair(THOTH_TE_COLOR_BLACK, COLOR_BLACK ,-1);
 	init_pair(THOTH_TE_COLOR_WHITE, -1 ,-1);
@@ -3329,6 +3350,7 @@ void Thoth_Editor_Init(Thoth_Editor *t,Thoth_Config *cfg){
 	AddCommand(t, CreateCommand((unsigned int[]){t->cfg->keybinds[THOTH_CloseFile]  , 0}, "", 0, SCR_NORM, CloseFile, NULL));
 	AddCommand(t, CreateCommand((unsigned int[]){t->cfg->keybinds[THOTH_SwitchFile] , 0}, "", 0, SCR_NORM, SwitchFile, NULL));
 	AddCommand(t, CreateCommand((unsigned int[]){t->cfg->keybinds[THOTH_SaveFile]  , 0}, "", 0, SCR_NORM, SaveFile, NULL));
+	AddCommand(t, CreateCommand((unsigned int[]){t->cfg->keybinds[THOTH_SaveAsFile]  , 0}, "", 0, SCR_NORM, SaveAsFile, NULL));
 
 	AddCommand(t, CreateCommand((unsigned int[]){t->cfg->keybinds[THOTH_ToggleComment]  , 0}, "", 0, SCR_NORM, ToggleComment, ToggleComment));
 	AddCommand(t, CreateCommand((unsigned int[]){t->cfg->keybinds[THOTH_ToggleCommentMulti]  , 0}, "", 0, SCR_NORM, ToggleCommentMulti, ToggleCommentMulti));
@@ -3623,7 +3645,7 @@ int Thoth_mvprintw(Thoth_Graphics* graphics, int x, int y, char *str, int len){
 		buffer[m] = str[k];
 		m++;
 	}
-	Thoth_Graphics_mvprintw(graphics,x,y,buffer,len);
+	Thoth_Graphics_mvprintw(graphics,x,y,buffer,m);
 	free(buffer);
 	return tabtospace*3 + len;
 }
@@ -3833,7 +3855,6 @@ void Thoth_Editor_Draw(Thoth_Editor *t){
 		int logLen = strlen(t->loggingText);
 #ifndef SDL_COMPILE
 #ifdef LINUX_COMPILE
-		endwin();
 		return;
 
 #endif
@@ -4045,7 +4066,7 @@ void Thoth_Editor_Draw(Thoth_Editor *t){
 					for(;k < (renderTo-1) && !(text[k] == '*' && text[k+1] == '/'); k++){
 						if(text[k] == '\n'){
 							Thoth_attron(hdcMem,(THOTH_COLOR_COMMENT));
-							Thoth_mvprintw(hdcMem, t->logX+x, t->logY+y, &text[ctOffset], k - ctOffset );
+							x += Thoth_mvprintw(hdcMem, t->logX+x, t->logY+y, &text[ctOffset], k - ctOffset );
 							Thoth_clrtoeol(hdcMem);
 							ctOffset = k+1;
 							x = 0;
@@ -4125,7 +4146,7 @@ void Thoth_Editor_Draw(Thoth_Editor *t){
 	char buffer[10];
 
 	for(y = t->logY, k = 0; y < t->linesY; y++, k++){
-		sprintf(buffer, "%.4i", t->file->scroll+k);
+		sprintf(buffer, "%.4i ", t->file->scroll+k);
 		Thoth_mvprintw(hdcMem, 0, t->logY+k, buffer, strlen(buffer));
 	}
 
@@ -4210,15 +4231,12 @@ void Thoth_Editor_Draw(Thoth_Editor *t){
 #ifdef SDL_COMPILE
 	if(t->autoCompleteLen)
 		Thoth_Graphics_RenderNCurses(t->graphics);
-
 #endif
 	int j;
-
 	k = 0;
 	y = 0;
 
-	for(; j < t->autoCompleteLen; j++){
-
+	for(j = 0; j < t->autoCompleteLen; j++){
 		if(j == t->autoCompleteIndex)
 			Thoth_attron(hdcMem,(THOTH_COLOR_SELECTED));
 		else 
@@ -4249,7 +4267,6 @@ void Thoth_Editor_Draw(Thoth_Editor *t){
 			memcpy(buffer, &text[t->autoComplete[j].offset],t->autoComplete[j].len);
 			Thoth_mvprintw(hdcMem, t->logX+x, t->logY+y+j+1, buffer, THOTH_MAX_AUTO_COMPLETE_STRLEN);
 		}
-
 	}
 
 #ifdef SDL_COMPILE
@@ -4351,6 +4368,7 @@ void Thoth_Editor_Event(Thoth_Editor *t, unsigned int key){
 			printf("\033[H\033[2J");
 		    sprintf(cmdbuffer, "%s",t->cfg->makecmd);
 
+			endwin();
 		    if(t->loggingText) free(t->loggingText);
 		    t->loggingText = NULL;
 
