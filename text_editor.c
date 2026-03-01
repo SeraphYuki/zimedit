@@ -3259,7 +3259,6 @@ void Thoth_Editor_Init(Thoth_Editor *t,Thoth_Config *cfg){
 	Thoth_Graphics_init_pair(t->graphics,THOTH_COLOR_NUM, THOTH_COLOR_RED, THOTH_COLOR_BLACK);
 	Thoth_Graphics_init_pair(t->graphics,THOTH_COLOR_FUNCTION, THOTH_COLOR_YELLOW, THOTH_COLOR_BLACK);
 	Thoth_Graphics_init_pair(t->graphics,THOTH_COLOR_STRING, THOTH_COLOR_MAGENTA, THOTH_COLOR_BLACK);
-
 	Thoth_Graphics_init_pair(t->graphics,THOTH_COLOR_SELECTED, THOTH_COLOR_BLACK ,THOTH_COLOR_CYAN);
 	Thoth_Graphics_init_pair(t->graphics,THOTH_COLOR_SELECTED_DIRECTORY, THOTH_COLOR_RED ,THOTH_COLOR_CYAN);
 	Thoth_Graphics_init_pair(t->graphics,THOTH_COLOR_UNSELECTED_DIRECTORY, THOTH_COLOR_RED ,THOTH_COLOR_WHITE);
@@ -4208,6 +4207,11 @@ void Thoth_Editor_Draw(Thoth_Editor *t){
 		Thoth_mvprintw(hdcMem, 0, t->logY+y, buffer, strlen(buffer));
 
 	}
+#ifdef SDL_COMPILE
+	if(t->autoCompleteLen)
+		Thoth_Graphics_RenderNCurses(t->graphics);
+
+#endif
 	int j;
 
 	k = 0;
