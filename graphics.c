@@ -597,8 +597,8 @@ void Thoth_Graphics_mvprintw(Thoth_Graphics *graphics, float x, float y, char *s
 		float w = fc.bw;
 		float h = fc.bh;
 
-		// x += fc.ax;
-		// y += fc.ay;
+		 //x += fc.ax;
+		 //y += fc.ay;
 
 		if(graphics->cfg->colorPairs[graphics->currentColorPair][0] != THOTH_COLOR_BLACK){
 			for(k = 0; k < 12; k+=2){
@@ -613,7 +613,7 @@ void Thoth_Graphics_mvprintw(Thoth_Graphics *graphics, float x, float y, char *s
 
 		if(!w || !h) continue;
 
-		// float tX = (p % 16) / 16.0f;
+		 //float tX = (p % 16) / 16.0f;
 		//float tY = (1 - graphics->fontTTF.atlasWidth) - (floorf(p / 16.0f) / 16.0f);
 		float tX = fc.tx;
 		float tY = 0;

@@ -1,11 +1,23 @@
-#ifdef LINUX_COMPILE
 #include "thoth.h"
 #include "log.h"
 #ifndef SDL_COMPILE
 #include "x11.h"
+#include <termios.h>
 #include <ncurses.h>
+#endif
+#ifdef SDL_COMPILE
+#ifdef SDL2_COMPILE
+#include <SDL2/SDL.h>
 #else
 #include <SDL3/SDL.h>
+#endif
+#ifdef LINUX_COMPILE
+#ifdef __OpenBSD__
+#include <util.h>
+#else
+#include <sys/wait.h>
+#include <pty.h>
+#endif
 #endif
 #include "file_browser.h"
 #include <stdio.h>
@@ -14,15 +26,8 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
-#include <termios.h>
-#ifdef __OpenBSD__
-#include <util.h>
-#else
-#include <pty.h>
 #endif
-#include <sys/wait.h>
-#endif
-#ifdef WINDOWS_COMPILE
+#ifdef WINDOWS_API_COMPILE
 #include <windows.h>
 #include "thoth.h"
 #include "log.h"
@@ -34,7 +39,7 @@
 #include <string.h>
 #endif
 #include <math.h>
-#ifdef WINDOWS_COMPILE
+#ifdef WINDOWS_API_COMPILE
 void clear(){}
 #endif
 enum {
@@ -613,7 +618,6 @@ static void ResolveCursorCollisions(Thoth_Editor *t, int *cursorIndex){
 }
 
 static void MoveCursorsAndSelection(Thoth_Editor *t, int pos, int by, int *cursorIndex){
-
 
 	int k;
 	for(k = 0; k < t->nCursors; k++){
@@ -3110,7 +3114,7 @@ static Thoth_EditorFile *CreateTextEditorFile(char *path){
 		for(; k >= 0; k--){
 #ifdef LINUX_COMPILE
 			if(path[k] == '/'){
-#elif WINDOWS_COMPILE
+#elif WINDOWS_API_COMPILE
 			if(path[k] == '\\'){
 #else
 			if(path[k] == '/'){
@@ -3142,7 +3146,7 @@ void Thoth_Editor_LoadFile(Thoth_Editor *t, char *pathRel){
 
 
 	char path[MAX_PATH_LEN] = {0};
-#ifdef WINDOWS_COMPILE
+#ifdef WINDOWS_API_COMPILE
 	GetFullPathName(pathRel, MAX_PATH_LEN, path, NULL);
 #endif
 #ifdef LINUX_COMPILE
@@ -3196,7 +3200,7 @@ void Thoth_Editor_LoadFile(Thoth_Editor *t, char *pathRel){
 #endif
 	int m;
 	for(m = strlen(path); m > 0; m--){
-#ifdef WINDOWS_COMPILE
+#ifdef WINDOWS_API_COMPILE
 		if(path[m] == '\\') break;
 #endif
 #ifdef LINUX_COMPILE
@@ -3603,7 +3607,7 @@ void Thoth_clrtoeol(WINDOW* hdcMem){
 }
 #endif
 #endif
-#ifdef WINDOWS_COMPILE
+#ifdef WINDOWS_API_COMPILE
 int Thoth_mvprintw(HDC hdcMem,int x, int y, char *str, int len){
 	int tabtospace = 0, k, m = 0;
 	for(k = 0; k < len; k++) if(str[k] == '\t') tabtospace++;
@@ -3668,7 +3672,7 @@ void Thoth_Editor_Draw(Thoth_Editor *t, Thoth_Graphics *hdcMem){
 	t->colsX = Thoth_Graphics_TextRows(t->graphics);
 #else
 
-#ifdef WINDOWS_COMPILE
+#ifdef WINDOWS_API_COMPILE
 
 void Thoth_Editor_Draw(Thoth_Editor *t,HWND hwnd){
 
@@ -3859,7 +3863,7 @@ void Thoth_Editor_Draw(Thoth_Editor *t){
 
 #endif
 #endif
-#ifdef WINDOWS_COMPILE
+#ifdef WINDOWS_API_COMPILE
 		// FILE *fp = fopen(THOTH_LOGCOMPILEFILE, "r");
 
 		// if(t->loggingText) free(t->loggingText);
@@ -4274,7 +4278,7 @@ void Thoth_Editor_Draw(Thoth_Editor *t){
 
 #else
 
-#ifdef WINDOWS_COMPILE
+#ifdef WINDOWS_API_COMPILE
 	  BitBlt(ps.hdc, cliRect.left, cliRect.top, cliRect.right-cliRect.left, cliRect.bottom - cliRect.top, hdcMem, 0, 0, SRCCOPY);
 	  SelectObject(hdcMem, hbmOld);
 
@@ -4386,7 +4390,7 @@ void Thoth_Editor_Event(Thoth_Editor *t, unsigned int key){
 
 			  }
 #endif
-#ifdef WINDOWS_COMPILE
+#ifdef WINDOWS_API_COMPILE
 		
 			chdir(t->fileBrowser.directory);
 			// char *logpath = THOTH_LOGCOMPILEFILE;

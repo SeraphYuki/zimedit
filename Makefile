@@ -24,24 +24,30 @@
 # # linux / BSD
 #CC=clang
 #CC=cc
-CC=gcc
-EXECUTABLE=zim
-CFLAGS = -g -Wall -lm -DLINUX_COMPILE -DSDL_COMPILE  $(shell pkg-config --cflags sdl3) \
+#CC=gcc
+#EXECUTABLE=zim
+#CFLAGS = -g -Wall -lm -DLINUX_COMPILE -DSDL_COMPILE  $(shell pkg-config --cflags sdl3) \
 $(shell pkg-config --cflags freetype2) -DLINUX_INSTALL
 
-FREETYPELIBS = $(shell pkg-config --libs freetype2)
-GLEWLIBS = $(shell pkg-config --libs glew)
-SDLLIBS = $(shell pkg-config --libs sdl3)
-LDLIBS = -lm -lutil  $(GLEWLIBS) $(SDLLIBS) $(FREETYPELIBS)
+#FREETYPELIBS = $(shell pkg-config --libs freetype2)
+#GLEWLIBS = $(shell pkg-config --libs glew)
+#SDLLIBS = $(shell pkg-config --libs sdl3)
+#LDLIBS = -lm -lutil  $(GLEWLIBS) $(SDLLIBS) $(FREETYPELIBS)
 #
 
-# CC=mingw32-gcc
-# EXECUTABLE=zim.exe
+ CC=x86_64-w64-mingw32-gcc
+ EXECUTABLE=zim.exe
 
-# FREETYPELIBS = -lfreetype
-# GLEWLIBS = -lglew32 -lopengl32 -mwindows
-# SDLLIBS = -lsdl2main -lsdl2
-# LDLIBS = -lm -lmingw32 $(GLEWLIBS) $(SDLLIBS) $(FREETYPELIBS) 
+ FREETYPELIBS = -lfreetype
+CFLAGS = -g -Wall -lm -DWINDOWS_COMPILE -DSDL2_COMPILE -DSDL_COMPILE  \
+$(shell x86_64-w64-mingw32-pkg-config --cflags sdl2) \
+$(shell x86_64-w64-mingw32-pkg-config --cflags freetype2)
+
+GLEWLIBS = -lglew32 -lopengl32 -mwindows -Lglu32
+
+ SDLLIBS = $(shell x86_64-w64-mingw32-pkg-config --libs sdl2)
+LDLIBS = -lm -lmingw32 $(SDLLIBS)  $(GLEWLIBS)  $(FREETYPELIBS) 
+
 # add -pg for gdb
 
 # windows
