@@ -3,7 +3,7 @@
 #CC=gcc
 #EXECUTABLE=libthoth.a
 #CFLAGS = -g -Wall -lm -DSDL_COMPILE -DLIBRARY_COMPILE -DLINUX_COMPILE\
- $(shell pkg-config --cflags sdl3) $(shell pkg-config --cflags freetype2)
+#$(shell pkg-config --cflags sdl3) $(shell pkg-config --cflags freetype2)
 #
 #SOURCES=main.c text_editor.c window.c graphics.c log.c freetype.c file_browser.c config.c
 #OBJECTS=$(SOURCES:.c=.o)
@@ -22,31 +22,29 @@
 #
 #
 # # linux / BSD
-#CC=clang
-#CC=cc
-#CC=gcc
-#EXECUTABLE=zim
-#CFLAGS = -g -Wall -lm -DLINUX_COMPILE -DSDL_COMPILE  $(shell pkg-config --cflags sdl3) \
+CC=gcc
+EXECUTABLE=zim
+
+CFLAGS = -g -Wall -lm -DLINUX_COMPILE -DSDL_COMPILE  $(shell pkg-config --cflags sdl3) \
 $(shell pkg-config --cflags freetype2) -DLINUX_INSTALL
+FREETYPELIBS = $(shell pkg-config --libs freetype2)
+GLEWLIBS = $(shell pkg-config --libs glew)
+SDLLIBS = $(shell pkg-config --libs sdl3)
+LDLIBS = -lm -lutil  $(GLEWLIBS) $(SDLLIBS) $(FREETYPELIBS)
 
-#FREETYPELIBS = $(shell pkg-config --libs freetype2)
-#GLEWLIBS = $(shell pkg-config --libs glew)
-#SDLLIBS = $(shell pkg-config --libs sdl3)
-#LDLIBS = -lm -lutil  $(GLEWLIBS) $(SDLLIBS) $(FREETYPELIBS)
+
+# CC=x86_64-w64-mingw32-gcc
+# EXECUTABLE=zim.exe
 #
-
- CC=x86_64-w64-mingw32-gcc
- EXECUTABLE=zim.exe
-
- FREETYPELIBS = -lfreetype
-CFLAGS = -g -Wall -lm -DWINDOWS_COMPILE -DSDL2_COMPILE -DSDL_COMPILE  \
-$(shell x86_64-w64-mingw32-pkg-config --cflags sdl2) \
-$(shell x86_64-w64-mingw32-pkg-config --cflags freetype2)
-
-GLEWLIBS = -lglew32 -lopengl32 -mwindows -Lglu32
-
- SDLLIBS = $(shell x86_64-w64-mingw32-pkg-config --libs sdl2)
-LDLIBS = -lm -lmingw32 $(SDLLIBS)  $(GLEWLIBS)  $(FREETYPELIBS) 
+# FREETYPELIBS = -lfreetype
+#CFLAGS = -g -Wall -lm -DWINDOWS_COMPILE -DSDL2_COMPILE -DSDL_COMPILE  \
+#$(shell x86_64-w64-mingw32-pkg-config --cflags sdl2) \
+#$(shell x86_64-w64-mingw32-pkg-config --cflags freetype2)
+#
+#GLEWLIBS = -lglew32 -lopengl32 -mwindows -Lglu32
+#
+# SDLLIBS = $(shell x86_64-w64-mingw32-pkg-config --libs sdl2)
+#LDLIBS = -lm -lmingw32 $(SDLLIBS)  $(GLEWLIBS)  $(FREETYPELIBS) 
 
 # add -pg for gdb
 
