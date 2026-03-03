@@ -18,7 +18,7 @@ New <b>colorscheme</b> is: https://github.com/morhetz/gruvbox<br>
 ![Screenshot](Screenshots/Screenshot.gif)<br>
 ![Screenshot](Screenshots/lib.gif)<br><br>
 <b>TODO</b>:<br>
-EOF bugs<br>
+copy/paste bugs<br>
 convert spaces to tabs, macro. <br>
 Have only the active file in memory AND swap files<br>
 minimap<br>

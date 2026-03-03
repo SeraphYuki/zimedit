@@ -32,18 +32,17 @@ GLEWLIBS = $(shell pkg-config --libs glew)
 SDLLIBS = $(shell pkg-config --libs sdl3)
 LDLIBS = -lm -lutil  $(GLEWLIBS) $(SDLLIBS) $(FREETYPELIBS)
 
-
-# CC=x86_64-w64-mingw32-gcc
-# EXECUTABLE=zim.exe
+# use main-windows-mingw.c
+#CC=x86_64-w64-mingw32-gcc
+#EXECUTABLE=zim.exe
 #
-# FREETYPELIBS = -lfreetype
 #CFLAGS = -g -Wall -lm -DWINDOWS_COMPILE -DSDL2_COMPILE -DSDL_COMPILE  \
-#$(shell x86_64-w64-mingw32-pkg-config --cflags sdl2) \
+#$(shell x86_64-w64-mingw32-sdl2-config --cflags) \
 #$(shell x86_64-w64-mingw32-pkg-config --cflags freetype2)
 #
+#FREETYPELIBS = -lfreetype
 #GLEWLIBS = -lglew32 -lopengl32 -mwindows -Lglu32
-#
-# SDLLIBS = $(shell x86_64-w64-mingw32-pkg-config --libs sdl2)
+#SDLLIBS = $(shell x86_64-w64-mingw32-sdl2-config --libs)
 #LDLIBS = -lm -lmingw32 $(SDLLIBS)  $(GLEWLIBS)  $(FREETYPELIBS) 
 
 # add -pg for gdb
@@ -85,5 +84,4 @@ $(EXECUTABLE): $(OBJECTS)
 	$(CC) -c $(CFLAGS) $< -o $@
 
 clean:
-	rm *.o
-
+	rm -rf *.o

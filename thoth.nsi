@@ -71,8 +71,9 @@ Section "Zim (required)"
 	;  Set output path to the installation directory.
 	SetOutPath $INSTDIR
 	  ; Put file there
-	File /r "windows-binaries*"
+	File /r "windows-binaries\*"
 	CreateDirectory "$APPDATA\zim"
+	CopyFiles $INSTDIR\zimconfig.cfg "$APPDATA\zim"
 	  ; Write the installation path into the registry
 	WriteRegStr HKLM SOFTWARE\Zim "Install_Dir" "$INSTDIR"
 	  ; Write the uninstall keys for Windows
