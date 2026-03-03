@@ -4,30 +4,25 @@ New <b>colorscheme</b> is: https://github.com/morhetz/gruvbox<br>
 <b>font</b>: https://github.com/larsenwork/monoid<br>
 ![Screenshot](Screenshots/Screenshot.png)
 <br><hr>
-    <b>SelectNextWord</b> Find/Replace, CTRL+D In sublime text ||| <b>AddCursorCommand</b> Up/Down<br>
-    <p>![Screenshot](Screenshots/selectcursors.gif) ![Screenshot](Screenshots/cursors.gif)<br></p>
-    <b>MoveLines</b> Up/Down ||| <b>MoveByWords</b> Left/Right <b>MoveByChars</b> Left/Right/Up/Down<br>
-    <p>![Screenshot](Screenshots/movelines.gif)  ![Screenshot](Screenshots/navigation.gif)<br></p>
-    <b>ExpandSelectionWords</b> Left/Right ||| <b>IndentLine</b> Left/Right<br>
-    <p>![Screenshot](Screenshots/selections.gif) ![Screenshot](Screenshots/indenting.gif)<br></p>
-    <b>Undo Redo Cut Copy Paste</b>  ||| <b>AutoComplete</b><br>
-    <p>![Screenshot](Screenshots/undo.gif) ![Screenshot](Screenshots/autocomplete.gif)<br></p>
-    
-    
-    
+	 <b>SelectNextWord</b> Find/Replace, CTRL+D In sublime text ||| <b>AddCursorCommand</b> Up/Down<br>
+	 <p>![Screenshot](Screenshots/selectcursors.gif) ![Screenshot](Screenshots/cursors.gif)<br></p>
+	 <b>MoveLines</b> Up/Down ||| <b>MoveByWords</b> Left/Right <b>MoveByChars</b> Left/Right/Up/Down<br>
+	 <p>![Screenshot](Screenshots/movelines.gif)  ![Screenshot](Screenshots/navigation.gif)<br></p>
+	 <b>ExpandSelectionWords</b> Left/Right ||| <b>IndentLine</b> Left/Right<br>
+	 <p>![Screenshot](Screenshots/selections.gif) ![Screenshot](Screenshots/indenting.gif)<br></p>
+	 <b>Undo Redo Cut Copy Paste</b>  ||| <b>AutoComplete</b><br>
+	 <p>![Screenshot](Screenshots/undo.gif) ![Screenshot](Screenshots/autocomplete.gif)<br></p>
+	 
+	 
+	 
 ![Screenshot](Screenshots/Screenshot.gif)<br>
 ![Screenshot](Screenshots/lib.gif)<br><br>
 <b>TODO</b>:<br>
-resolvecursorcollisions bug with replacing<br>
-bug multiline deleteline<br>
-directory bug<br>
-make command bug<br>
-cursor bugs<br>
+EOF bugs<br>
 convert spaces to tabs, macro. <br>
 Have only the active file in memory AND swap files<br>
 minimap<br>
 highlighting for more languages than C, and general lua (function is a keyword)<br>
-} auto indent down <br>
 check for file change outside editor and reload on window focus event<br>
 code folding<br>
 <br>
