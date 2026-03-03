@@ -1537,9 +1537,7 @@ static void Paste(Thoth_Editor *t, Thoth_EditorCmd *c){
 	for(k = 0; k < clipboardLen; k++){
 		if(clipboard[k] == '\n') lines++;
 	}
-#ifdef SDL_COMPILE
 	lines--;
-#endif
 
 	if(lines == t->nCursors){
 		
@@ -1564,8 +1562,15 @@ static void Paste(Thoth_Editor *t, Thoth_EditorCmd *c){
 
 	} else {
 		for(k = 0; k < t->nCursors; k++){
+			char tmp = clipboard[clipboardLen-1];
+			if(clipboard[clipboardLen-1] == '\n'){
+				clipboard[clipboardLen-1] = 0;
+				clipboardLen--;
+			}
+			
 			EraseAllSelectedText(t, &k, c);
 			AddStrToText(t, &k, clipboard);
+			clipboard[clipboardLen] = tmp;
 			t->cursors[k].addedLen = clipboardLen;
 		}
 	}
@@ -2189,7 +2194,9 @@ static void Copy(Thoth_Editor *t, Thoth_EditorCmd *c){
 	}
 	if(buffer){
 		if(t->clipboard) free(t->clipboard);
+		bufferLen++;
 		buffer = realloc(buffer, bufferLen+1);
+		buffer[bufferLen-1] = '\n';
 		buffer[bufferLen] = 0;
 		t->clipboard=buffer;
 #ifdef SDL_COMPILE
