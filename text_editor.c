@@ -1,6 +1,6 @@
-#include "thoth.h"
 #include "log.h"
 #include "file_browser.h"
+#include "thoth.h"
 #include <stdio.h>
 #include <fcntl.h>
 #include <ctype.h>
@@ -806,8 +806,8 @@ static void MoveLineUp(Thoth_Editor *t, Thoth_EditorCur *cursor){
 
 		int lineStart = cursor->pos == 0 ? 0 : cursor->pos-1;
 		for(; lineStart > 0 && t->file->text[lineStart] != '\n'; lineStart--);
-		if(lineStart == 0) return; // already top line
-		lineStart++; // skip \n of prev line
+		if(lineStart > 0) lineStart++; // skip \n of prev line
+		else return;
 
 		int charsOnLine = cursor->pos;
 		for(; charsOnLine < t->file->textLen && t->file->text[charsOnLine] != '\n'; charsOnLine++);
@@ -817,6 +817,9 @@ static void MoveLineUp(Thoth_Editor *t, Thoth_EditorCur *cursor){
 		for(; startOfPrevLine > 0 && t->file->text[startOfPrevLine] != '\n'; startOfPrevLine--);
 		if(startOfPrevLine > 0) startOfPrevLine++;
 		int prevLineLen = lineStart - startOfPrevLine;
+
+		if(lineStart < 0) return;
+		if(startOfPrevLine < 0) return;
 
 		if(prevLineLen > charsOnLine){
 
@@ -841,13 +844,13 @@ static void MoveLineUp(Thoth_Editor *t, Thoth_EditorCur *cursor){
 		cursor->pos = startOfPrevLine + (cursor->pos - lineStart);
 	} else {
 
-		int lineStart = cursor->selection.startCursorPos == 0 ? 0 : cursor->selection.startCursorPos-1;
+		int lineStart = cursor->selection.startCursorPos <= 0 ? 0 : cursor->selection.startCursorPos-1;
 		for(; lineStart > 0 && t->file->text[lineStart] != '\n'; lineStart--);
 		if(lineStart > 0) lineStart++; // skip \n of prev line
+		else return;
 
 		int charsOnLine = cursor->selection.startCursorPos+cursor->selection.len-1;
 		for(; charsOnLine < t->file->textLen && t->file->text[charsOnLine] != '\n'; charsOnLine++);
-		if(charsOnLine >= t->file->textLen || t->file->text[charsOnLine] != '\n') return; // end of file dont move down
 		charsOnLine = (charsOnLine - lineStart);
 
 		int startOfPrevLine = lineStart-2;
@@ -905,11 +908,14 @@ static void MoveLineDown(Thoth_Editor *t, Thoth_EditorCur *cursor){
 		charsOnLine = (charsOnLine - lineStart);
 
 		int startOfNextLine = lineStart+charsOnLine+1;
+		if(startOfNextLine >= t->file->textLen) return;
 		int nextLineLen = startOfNextLine;
 		for(; nextLineLen < t->file->textLen && t->file->text[nextLineLen] != '\n'; nextLineLen++);
 
 		nextLineLen = (nextLineLen - startOfNextLine);
-
+		
+		if(lineStart + nextLineLen >= t->file->textLen-1) return; // already last line
+				
 		if(nextLineLen > charsOnLine){
 			char *tmp = malloc(charsOnLine);
 			memcpy(tmp, &t->file->text[lineStart], charsOnLine);
@@ -942,10 +948,13 @@ static void MoveLineDown(Thoth_Editor *t, Thoth_EditorCur *cursor){
 		charsOnLine = (charsOnLine - lineStart);
 
 		int startOfNextLine = lineStart+charsOnLine+1;
+		if(startOfNextLine >= t->file->textLen) return;
 		int nextLineLen = startOfNextLine;
 		for(; nextLineLen < t->file->textLen && t->file->text[nextLineLen] != '\n'; nextLineLen++);
 
 		nextLineLen = (nextLineLen - startOfNextLine);
+
+		if(lineStart + nextLineLen >= t->file->textLen-1) return; // already last line
 
 		if(nextLineLen > charsOnLine){
 			char *tmp = malloc(charsOnLine);
