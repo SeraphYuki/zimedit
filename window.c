@@ -38,6 +38,12 @@ int Window_Open(){
 		SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE
 	);
 #else
+	window = SDL_CreateWindow(
+		WINDOW_TITLE,
+		WINDOW_INIT_WIDTH,
+		WINDOW_INIT_HEIGHT,
+		SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE
+	);
 #endif
 
 	int pixels[] = {
@@ -119,12 +125,7 @@ int Window_Open(){
 	context = SDL_GL_CreateContext(window);
 	SDL_GL_SetSwapInterval(1);
 
-	context = SDL_GL_CreateContext(window);
-	SDL_GL_MakeCurrent(window, context);
-
-	SDL_GL_SetSwapInterval(1);
-
-	//glewExperimental = GL_TRUE;
+	glewExperimental = GL_TRUE;
 
 	if(glewInit() != GLEW_OK) {
 	  LOG(LOG_RED, "Glew Init Failed %s\n", SDL_GetError());

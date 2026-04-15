@@ -9,16 +9,16 @@ static void readColor( JSON_Value *val,Thoth_Config *cfg, int index){
 	unsigned int x = 0;
 	if(!val->children ||  !val->children->string) return;
 	sscanf(val->children->string,"%x", &x);	
-	#ifdef WINDOWS_COMPILE
-		cfg->colors[index].r = (unsigned int)x & 0xFF0000;
-		cfg->colors[index].g = (unsigned int)x & 0x00FF00;
-		cfg->colors[index].b = x & 0xFF;
-	#else
+	//#ifdef WINDOWS_COMPILE
+		//cfg->colors[index].r = (unsigned int)x & 0xFF0000;
+		//cfg->colors[index].g = (unsigned int)x & 0x00FF00;
+		//cfg->colors[index].b = x & 0xFF;
+	//#else
 		cfg->colors[index].r = (x>>16)*1000/255;
 		cfg->colors[index].g = ((x>>8)&0xFF)*1000/255;
 		cfg->colors[index].b = (x&0xFF)*1000/255;
 
-	#endif
+	//#endif
 	//printf("%s %.6x\n", val->key,x);
 }
 
@@ -183,15 +183,15 @@ void Thoth_Config_Read(Thoth_Config *cfg){
 	
 	int k;
 	for(k = 0; k < THOTH_NUM_COLORS; k++){
-	#ifdef WINDOWS_COMPILE
-		cfg->colors[k].r = (int)defaultColors[k].r << 16;
-		cfg->colors[k].g = (int)defaultColors[k].g << 8;
-		cfg->colors[k].b = defaultColors[k].b & 0xFF;
-	#else
-		cfg->colors[k].r = defaultColors[k].r*1000/255;
-		cfg->colors[k].g = defaultColors[k].g*1000/255;
-		cfg->colors[k].b = defaultColors[k].b*1000/255;
-	#endif
+	//#ifdef WINDOWS_COMPILE
+		//cfg->colors[k].r = (int)defaultColors[k].r << 16;
+		//cfg->colors[k].g = (int)defaultColors[k].g << 8;
+		//cfg->colors[k].b = defaultColors[k].b & 0xFF;
+	//#else
+		cfg->colors[k].r = defaultColors[k].r/255.0f;
+		cfg->colors[k].g = defaultColors[k].g/255.0f;
+		cfg->colors[k].b = defaultColors[k].b/255.0f;
+	//#endif
 	}
 
 	#ifdef LINUX_COMPILE
