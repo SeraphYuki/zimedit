@@ -58,7 +58,7 @@ enum {
 
 static void ToggleComment(Thoth_Editor *t, Thoth_EditorCmd *c);
 static void ToggleCommentMulti(Thoth_Editor *t, Thoth_EditorCmd *c);
-static void PutsCursor(Thoth_EditorCur c);
+static void PutsCursor(Thoth_Editor *t, Thoth_EditorCur c);
 static void LoggingMoveLines(Thoth_Editor *t, int num);
 static void LoggingRemoveCharacter(Thoth_Editor *t);
 static void LoggingAddCharacter(Thoth_Editor *t, char c);
@@ -2286,29 +2286,30 @@ static void EraseAllSelectedText(Thoth_Editor *t, int *cursorIndex, Thoth_Editor
 
 }
 
-static void PutsCursor(Thoth_EditorCur c){
+static void PutsCursor(Thoth_Editor *t, Thoth_EditorCur c){
 	
-	printf( "CURSOR:\n");
-	printf( "\tselection: startPos: %i len: %i \n", 
+	fprintf(t->logFile, "CURSOR:\n");
+	fprintf(t->logFile, "\tselection: startPos: %i len: %i \n", 
 		c.selection.startCursorPos, c.selection.len);
 
 	if(c.clipboard)
-		printf( "\tclipboard: %s \n", c.clipboard);
+		fprintf(t->logFile, "\tclipboard: %s \n", c.clipboard);
 
 	if(c.savedText)
-		printf( "\tsavedText: %s \n", c.savedText);
+		fprintf(t->logFile, "\tsavedText: %s \n", c.savedText);
 
-	printf( "\taddedLen: %i\n", c.addedLen);
-	printf( "\tpos: %i\n", c.pos);
+	fprintf(t->logFile, "\taddedLen: %i\n", c.addedLen);
+	fprintf(t->logFile, "\tpos: %i\n", c.pos);
 }
 
 static void SaveCursors(Thoth_Editor *t, Thoth_EditorCmd *c){
 	
-
+	fprintf(t->logFile, "SAVEDCURSORS:\n");
+	
 	int k;
 
 	for(k = 0; k < c->nSavedCursors; k++){
-		// PutsCursor(c->savedCursors[k]);
+		 PutsCursor(t, c->savedCursors[k]);
 	}
 
 	if(c->savedCursors){
@@ -3006,6 +3007,7 @@ static void ExecuteCommand(Thoth_Editor *t, Thoth_EditorCmd *c){
 	if(c->Undo == NULL || t->logging){
 		t->lastCmd = NULL;
 		c->Execute(t, c);
+		fprintf(t->logFile,"NOUNDO or LOGGING| %s, (%s)\n", c->name, c->keys);
 		if(c->scroll == SCR_CENT)
 			UpdateScrollCenter(t);
 		else
@@ -3054,6 +3056,7 @@ static void ExecuteCommand(Thoth_Editor *t, Thoth_EditorCmd *c){
 						
 				// (*t->lastCmd)->Execute(t,*t->lastCmd);
 				ExpandAddCharacters(t, *t->lastCmd);
+				fprintf(t->logFile,"EXPAND ADD CHARACTERS | (%s)\n", c->keys);
 				(*t->lastCmd)->num = lastLen + strlen(c->keys);
 			}
 			break;
@@ -3069,6 +3072,7 @@ static void ExecuteCommand(Thoth_Editor *t, Thoth_EditorCmd *c){
 		t->lastCmd = &f->history[f->sHistory-1];
 		*t->lastCmd = CopyCommand(c);
 		(*t->lastCmd)->Execute(t,*t->lastCmd);
+		fprintf(t->logFile,"COMMAND %s  | (%s) %i\n", c->name, c->keys, c->num);
 
 		if(c->keys && IsToken(c->keys[0])){
 			t->lastCmd = NULL;
@@ -3288,7 +3292,6 @@ void Thoth_Editor_Init(Thoth_Editor *t,Thoth_Config *cfg){
 	memset(t, 0, sizeof(Thoth_Editor));
 	t->cfg = cfg;
 #endif
-//	 logfile = fopen("log.txt", "wb");
 #ifdef SDL_COMPILE
 
 	Thoth_Graphics_init_pair(t->graphics,THOTH_COLOR_SIDE_NUMBERS, THOTH_COLOR_WHITE, THOTH_COLOR_BLACK);
@@ -3359,6 +3362,8 @@ void Thoth_Editor_Init(Thoth_Editor *t,Thoth_Config *cfg){
 	timeout(50);
 #endif
 #endif
+
+	t->logFile = fopen(THOTH_LOGCOMPILEFILE, "wb");
 	AddCommand(t, CreateCommand((unsigned int[]){t->cfg->keybinds[THOTH_MoveLinesText_UP] , 0}, "", -1, SCR_NORM, MoveLinesText, UndoMoveLinesText));
 	AddCommand(t, CreateCommand((unsigned int[]){t->cfg->keybinds[THOTH_MoveLinesText_DOWN] , 0}, "", 1, SCR_NORM, MoveLinesText, UndoMoveLinesText));
 
@@ -4587,5 +4592,6 @@ int Thoth_Editor_Destroy(Thoth_Editor *t){
 
 	FreeCursors(t);
 	Thoth_FileBrowser_Free(&t->fileBrowser);
+	fclose(t->logFile);
 	return 1;
 }

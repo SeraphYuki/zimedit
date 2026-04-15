@@ -32,11 +32,12 @@ int Window_Open(){
 #ifdef SDL2_COMPILE
 	window = SDL_CreateWindow(
 		WINDOW_TITLE,
-		0,0,
+		SDL_WINDOWPOS_CENTERED,SDL_WINDOWPOS_CENTERED,
 		WINDOW_INIT_WIDTH,
 		WINDOW_INIT_HEIGHT,
 		SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE
 	);
+	SDL_SetWindowResizable(window, SDL_TRUE);
 #else
 	window = SDL_CreateWindow(
 		WINDOW_TITLE,

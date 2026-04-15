@@ -71,7 +71,7 @@
  typedef struct Thoth_EditorCur Thoth_EditorCur;
 
  struct Thoth_EditorCmd {
-
+	char *name;
 	unsigned int keyBinding[8];
 	char *keys;
 	int num;
@@ -135,7 +135,7 @@ typedef struct {
 	Thoth_EditorFile          *file;
 	Thoth_FileBrowser       fileBrowser;
 	Thoth_EditorCmd         **lastCmd;  
-
+	FILE					*logFile;
 	int                     linesY;
 	int                     colsX;
 	int                     nCommands;
