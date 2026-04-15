@@ -14,9 +14,9 @@ static void readColor( JSON_Value *val,Thoth_Config *cfg, int index){
 		//cfg->colors[index].g = (unsigned int)x & 0x00FF00;
 		//cfg->colors[index].b = x & 0xFF;
 	//#else
-		cfg->colors[index].r = (x>>16)*1000/255;
-		cfg->colors[index].g = ((x>>8)&0xFF)*1000/255;
-		cfg->colors[index].b = (x&0xFF)*1000/255;
+		cfg->colors[index].r = (x>>16)/255.0f;
+		cfg->colors[index].g = ((x>>8)&0xFF)/255.0f;
+		cfg->colors[index].b = (x&0xFF)/255.0f;
 
 	//#endif
 	//printf("%s %.6x\n", val->key,x);
