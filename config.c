@@ -14,11 +14,13 @@ static void readColor( JSON_Value *val,Thoth_Config *cfg, int index){
 		//cfg->colors[index].g = (unsigned int)x & 0x00FF00;
 		//cfg->colors[index].b = x & 0xFF;
 	//#else
-		cfg->colors[index].r = (x>>16)/255.0f;
-		cfg->colors[index].g = ((x>>8)&0xFF)/255.0f;
-		cfg->colors[index].b = (x&0xFF)/255.0f;
-
-	//#endif
+		cfg->colors[index].r = (x>>16);
+		cfg->colors[index].g = ((x>>8)&0xFF);
+		cfg->colors[index].b = (x&0xFF);
+		cfg->colors[index].r /= 255.0f;
+		cfg->colors[index].g /= 255.0f;
+		cfg->colors[index].b /= 255.0f;
+		//#endif
 	//printf("%s %.6x\n", val->key,x);
 }
 
@@ -32,7 +34,7 @@ static void ReadCommand(JSON_Value *val, unsigned int *command){
 		if(val->type == JSON_STRING) {
 			if(strlen(val->string) == 1) *command |= val->string[0];
 			else if(strcmp(val->string, "CTRL") == 0) *command |= THOTH_CTRL_KEY;
-			else if(strcmp(val->string, "ENTER") == 0) *command |= 27;
+			else if(strcmp(val->string, "ENTER") == 0) *command |= THOTH_ENTER_KEY;
 			else if(strcmp(val->string, "SHIFT") == 0) *command |= THOTH_SHIFT_KEY;
 			else if(strcmp(val->string, "ALT") == 0) *command |= THOTH_ALT_KEY;
 			else if(strcmp(val->string, "ARROW_RIGHT") == 0) *command |= THOTH_ARROW_RIGHT;
@@ -84,6 +86,8 @@ static void ConfigRead(JSON_Value *val, Thoth_Config *cfg){
 				 	ReadCommand(val, &cfg->keybinds[THOTH_MoveLinesText_UP]);
 				 else if(strcmp(val->key, "MoveLinesText_DOWN") == 0)
 				 	ReadCommand(val, &cfg->keybinds[THOTH_MoveLinesText_DOWN]);
+				 else if(strcmp(val->key, "RemoveExtraCursors") == 0)
+				 	ReadCommand(val, &cfg->keybinds[THOTH_RemoveExtraCursors]);
 				 else if(strcmp(val->key, "OpenFileBrowser") == 0)
 				 	ReadCommand(val, &cfg->keybinds[THOTH_OpenFileBrowser]);
 				 else if(strcmp(val->key, "OpenFileZim") == 0)
@@ -183,15 +187,15 @@ void Thoth_Config_Read(Thoth_Config *cfg){
 	
 	int k;
 	for(k = 0; k < THOTH_NUM_COLORS; k++){
-	//#ifdef WINDOWS_COMPILE
-		//cfg->colors[k].r = (int)defaultColors[k].r << 16;
-		//cfg->colors[k].g = (int)defaultColors[k].g << 8;
-		//cfg->colors[k].b = defaultColors[k].b & 0xFF;
-	//#else
-		cfg->colors[k].r = defaultColors[k].r/255.0f;
-		cfg->colors[k].g = defaultColors[k].g/255.0f;
-		cfg->colors[k].b = defaultColors[k].b/255.0f;
-	//#endif
+	#ifdef WINDOWS_COMPILE
+		cfg->colors[k].r = (int)defaultColors[k].r << 16;
+		cfg->colors[k].g = (int)defaultColors[k].g << 8;
+		cfg->colors[k].b = defaultColors[k].b & 0xFF;
+	#else
+		cfg->colors[k].r = defaultColors[k].r*1000/255;
+		cfg->colors[k].g = defaultColors[k].g*1000/255;
+		cfg->colors[k].b = defaultColors[k].b*1000/255;
+	#endif
 	}
 
 	#ifdef LINUX_COMPILE
@@ -201,6 +205,7 @@ void Thoth_Config_Read(Thoth_Config *cfg){
 	strcpy(cfg->makecmd, "mingw32-make");
 	#endif
 
+	cfg->keybinds[THOTH_RemoveExtraCursors] = 27;
 	cfg->keybinds[THOTH_MoveLinesText_UP] = THOTH_CTRL_KEY|THOTH_SHIFT_KEY|THOTH_ARROW_UP;
 	cfg->keybinds[THOTH_MoveLinesText_DOWN] = THOTH_CTRL_KEY|THOTH_SHIFT_KEY|THOTH_ARROW_DOWN;
 	cfg->keybinds[THOTH_OpenFileBrowser] = THOTH_CTRL_KEY|THOTH_SHIFT_KEY|'o';

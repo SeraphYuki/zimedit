@@ -10,6 +10,7 @@ enum {
 	THOTH_OpenFileBrowser,
 	THOTH_Help,
 	THOTH_OpenFileZim,
+	THOTH_RemoveExtraCursors,
 	THOTH_NewFile,
 	THOTH_CloseFile,
 	THOTH_SwitchFile,

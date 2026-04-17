@@ -71,7 +71,7 @@
  typedef struct Thoth_EditorCur Thoth_EditorCur;
 
  struct Thoth_EditorCmd {
-	char *name;
+	char name[64];
 	unsigned int keyBinding[8];
 	char *keys;
 	int num;
@@ -174,7 +174,7 @@ typedef struct {
 void Thoth_Editor_LoadFile(Thoth_Editor *t, char *path);
 #ifdef SDL_COMPILE
 void Thoth_Editor_Draw(Thoth_Editor *t, Thoth_Graphics *hdcMem);
-#elif
+#else
 
 #ifdef WINDOWS_COMPILE
 void Thoth_Editor_Draw(Thoth_Editor *t,HWND hwnd);

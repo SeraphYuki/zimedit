@@ -126,6 +126,7 @@ static void EventEnter(Thoth_Editor *t, int key);
 static void EventCtrlEnter(Thoth_Editor *t, Thoth_EditorCmd *c);
 static void SaveCursors(Thoth_Editor *t, Thoth_EditorCmd *c);
 static void LoadCursors(Thoth_Editor *t, Thoth_EditorCmd *c);
+static void RemoveExtraCursorsCommand(Thoth_Editor *t, Thoth_EditorCmd *c);
 static void AddStrToText(Thoth_Editor *t, int *cursorIndex, char *text);
 static void RemoveStrFromText(Thoth_Editor *t, int *cursorIndex, int len);
 static void UndoRemoveCharacters(Thoth_Editor *t, Thoth_EditorCmd *c);
@@ -145,7 +146,7 @@ static void FreeCommand(Thoth_EditorCmd *c);
 static void UpdateScrollCenter(Thoth_Editor *t);
 static void UpdateScroll(Thoth_Editor *t);
 static Thoth_EditorCmd *CopyCommand(Thoth_EditorCmd *c);
-static Thoth_EditorCmd *CreateCommand(const unsigned int binding[], const char *keys, int n, int scroll,
+static Thoth_EditorCmd *CreateCommand(const char *name, const unsigned int binding[], const char *keys, int n, int scroll,
 	void (*E)(Thoth_Editor *, Thoth_EditorCmd *), void (*U)(Thoth_Editor *, Thoth_EditorCmd *));
 static void UndoCommands(Thoth_Editor *t, int num);
 static void RedoCommands(Thoth_Editor *t, int num);
@@ -448,10 +449,10 @@ static void NewLinesElastic(Thoth_Editor *t){
 		buffer[0] = '\n';
 		for(k = 1; k < tabs+1; k++) buffer[k] = '\t';
 		buffer[k] = 0;
-		command = CreateCommand((const unsigned int[]){0}, buffer, 0, 
+		command = CreateCommand("AddCharacters",(const unsigned int[]){0}, buffer, 0, 
 			SCR_CENT, AddCharacters, UndoAddCharacters);
 	} else {
-		command = CreateCommand((const unsigned int[]){0}, "\n", 0, 
+		command = CreateCommand("AddCharacters",(const unsigned int[]){0}, "\n", 0, 
 			SCR_CENT, AddCharacters, UndoAddCharacters);
 	}
 	
@@ -504,7 +505,7 @@ static void EventEnter(Thoth_Editor *t, int key){
 	
 	
 		Thoth_EditorCmd *command = 
-		CreateCommand((const unsigned int[]){0}, buffer, 0, SCR_CENT, AddCharacters, UndoAddCharacters);
+		CreateCommand("AddCharacters",(const unsigned int[]){0}, buffer, 0, SCR_CENT, AddCharacters, UndoAddCharacters);
 		ExecuteCommand(t,command);
 		FreeCommand(command);
 	
@@ -1974,16 +1975,14 @@ static void ToggleComment(Thoth_Editor *t, Thoth_EditorCmd *c){
 
 		int startSelection = t->cursors[k].selection.startCursorPos;
 		int endSelection = t->cursors[k].selection.startCursorPos+t->cursors[k].selection.len;
-
-
 		int m;
 		for(m = startSelection; m < endSelection; m++){
 			
 			while((t->file->text[m] == '\t' || t->file->text[m] == ' ')
 			 && m < endSelection) m++;
-
-			if(t->file->text[m] == '\n') continue;
-
+			
+			//if(t->file->text[m] == '\n') continue;
+			
 			if(strncmp(&t->file->text[m], "//", 2) == 0) {
 				t->cursors[k].pos = m+2;
 				RemoveStrFromText(t, &k, 2);
@@ -2087,6 +2086,18 @@ static void ExpandSelectionLines(Thoth_Editor *t, Thoth_EditorCmd *c){
 
 		cursor->selection.len = cursor->pos - cursor->selection.startCursorPos;
 	}
+}
+
+static void RemoveExtraCursorsCommand(Thoth_Editor *t, Thoth_EditorCmd *c){
+	SaveCursors(t,c);
+	RemoveExtraCursors(t);
+	RemoveSelections(t);
+	//t->lastCmd = NULL;
+	t->autoCompleteIndex = 0;
+	UpdateScrollCenter(t);
+}
+static void UndoRemoveExtraCursorsCommand(Thoth_Editor *t, Thoth_EditorCmd *c){
+	LoadCursors(t,c);
 }
 
 static void SelectAll(Thoth_Editor *t, Thoth_EditorCmd *c){
@@ -2221,17 +2232,17 @@ static void Cut(Thoth_Editor *t, Thoth_EditorCmd *c){
 
 	UNUSED(c);
 	if(t->cursors[0].selection.len == 0){
-		Thoth_EditorCmd *command = CreateCommand((const unsigned int[]){0}, 
+		Thoth_EditorCmd *command = CreateCommand("ExpandSelectionLines",(const unsigned int[]){0}, 
 		0, 1, SCR_CENT, ExpandSelectionLines, NULL);
 		ExecuteCommand(t, command);
 		FreeCommand(command);
 	}
 
-	Thoth_EditorCmd *command = CreateCommand((const unsigned int[]){0}, 0, 1, SCR_CENT, Copy, NULL);
+	Thoth_EditorCmd *command = CreateCommand("Copy",(const unsigned int[]){0}, 0, 1, SCR_CENT, Copy, NULL);
 	ExecuteCommand(t, command);
 	FreeCommand(command);
 
-	command = CreateCommand((const unsigned int[]){0}, 0, 0, SCR_CENT, RemoveCharacters, UndoRemoveCharacters);
+	command = CreateCommand("RemoveCharacters",(const unsigned int[]){0}, 0, 0, SCR_CENT, RemoveCharacters, UndoRemoveCharacters);
 	ExecuteCommand(t, command);
 	FreeCommand(command);
 }
@@ -2893,7 +2904,7 @@ static void FreeCommand(Thoth_EditorCmd *c){
 
 static Thoth_EditorCmd *CopyCommand(Thoth_EditorCmd *c){
 
-	Thoth_EditorCmd *ret = CreateCommand((const unsigned int *)c->keyBinding, c->keys, c->num, c->scroll, c->Execute, c->Undo);
+	Thoth_EditorCmd *ret = CreateCommand(c->name,(const unsigned int *)c->keyBinding, c->keys, c->num, c->scroll, c->Execute, c->Undo);
 
 	ret->savedCursors = (Thoth_EditorCur *)malloc(sizeof(Thoth_EditorCur) * c->nSavedCursors);
 	ret->nSavedCursors = c->nSavedCursors;
@@ -2914,12 +2925,13 @@ static Thoth_EditorCmd *CopyCommand(Thoth_EditorCmd *c){
 	return ret;
 }
 
-static Thoth_EditorCmd *CreateCommand(const unsigned int binding[], const char *keys, int n, int scroll,
+static Thoth_EditorCmd *CreateCommand(const char *name, const unsigned int binding[], const char *keys, int n, int scroll,
 	void (*E)(Thoth_Editor *, Thoth_EditorCmd *), void (*U)(Thoth_Editor *, Thoth_EditorCmd *)){
 
 	Thoth_EditorCmd *res = (Thoth_EditorCmd *)malloc(sizeof(Thoth_EditorCmd));
 	memset(res, 0, sizeof(Thoth_EditorCmd));
 
+	strcpy(res->name, name);
 	res->scroll = scroll;
 	res->num = n;
 
@@ -3047,7 +3059,7 @@ static void ExecuteCommand(Thoth_Editor *t, Thoth_EditorCmd *c){
 		if(BufferExpandFuncs[k] == c->Execute
 			&& t->lastCmd && (*t->lastCmd)->Execute == BufferExpandFuncs[k]
 			 && ( ( c->keys && !IsToken(c->keys[0]) && 
-			 lastKeys && !IsToken((*lastKeys)[lastLen-1]))))
+			 lastKeys &&  lastLen > 0 && !IsToken((*lastKeys)[lastLen-1]))))
 			{
 			if(c->keys){
 				(*t->lastCmd)->num = lastLen;
@@ -3363,68 +3375,66 @@ void Thoth_Editor_Init(Thoth_Editor *t,Thoth_Config *cfg){
 #endif
 #endif
 
-	t->logFile = fopen(THOTH_LOGCOMPILEFILE, "wb");
-	AddCommand(t, CreateCommand((unsigned int[]){t->cfg->keybinds[THOTH_MoveLinesText_UP] , 0}, "", -1, SCR_NORM, MoveLinesText, UndoMoveLinesText));
-	AddCommand(t, CreateCommand((unsigned int[]){t->cfg->keybinds[THOTH_MoveLinesText_DOWN] , 0}, "", 1, SCR_NORM, MoveLinesText, UndoMoveLinesText));
+	t->logFile = fopen(THOTH_LOGCOMPILEFILE, "w");
+	AddCommand(t, CreateCommand("RemoveExtraCursors",(unsigned int[]){t->cfg->keybinds[THOTH_RemoveExtraCursors] , 0}, "", -1, SCR_NORM, RemoveExtraCursorsCommand, UndoRemoveExtraCursorsCommand));
+	AddCommand(t, CreateCommand("MoveLinesText_UP",(unsigned int[]){t->cfg->keybinds[THOTH_MoveLinesText_UP] , 0}, "", -1, SCR_NORM, MoveLinesText, UndoMoveLinesText));
+	AddCommand(t, CreateCommand("MoveLinesText_DOWN",(unsigned int[]){t->cfg->keybinds[THOTH_MoveLinesText_DOWN] , 0}, "", 1, SCR_NORM, MoveLinesText, UndoMoveLinesText));
 
-	AddCommand(t, CreateCommand((unsigned int[]){t->cfg->keybinds[THOTH_OpenFileBrowser]  , 0}, "", 0, SCR_NORM, OpenFileBrowser, NULL));
-	AddCommand(t, CreateCommand((unsigned int[]){t->cfg->keybinds[THOTH_OpenFileZim]  , 0}, "", 0, SCR_NORM, OpenFileZim, NULL));
-	AddCommand(t, CreateCommand((unsigned int[]){t->cfg->keybinds[THOTH_Help]  , 0}, "", 0, SCR_NORM, HelpZim, NULL));
-	AddCommand(t, CreateCommand((unsigned int[]){t->cfg->keybinds[THOTH_NewFile]  , 0}, "", 0, SCR_NORM, NewFile, NULL));
-	AddCommand(t, CreateCommand((unsigned int[]){t->cfg->keybinds[THOTH_CloseFile]  , 0}, "", 0, SCR_NORM, CloseFile, NULL));
-	AddCommand(t, CreateCommand((unsigned int[]){t->cfg->keybinds[THOTH_SwitchFile] , 0}, "", 0, SCR_NORM, SwitchFile, NULL));
-	AddCommand(t, CreateCommand((unsigned int[]){t->cfg->keybinds[THOTH_SaveFile]  , 0}, "", 0, SCR_NORM, SaveFile, NULL));
-	AddCommand(t, CreateCommand((unsigned int[]){t->cfg->keybinds[THOTH_SaveAsFile]  , 0}, "", 0, SCR_NORM, SaveAsFile, NULL));
+	AddCommand(t, CreateCommand("OpenFileBrowser",(unsigned int[]){t->cfg->keybinds[THOTH_OpenFileBrowser]  , 0}, "", 0, SCR_NORM, OpenFileBrowser, NULL));
+	AddCommand(t, CreateCommand("OpenFileZim",(unsigned int[]){t->cfg->keybinds[THOTH_OpenFileZim]  , 0}, "", 0, SCR_NORM, OpenFileZim, NULL));
+	AddCommand(t, CreateCommand("Help",(unsigned int[]){t->cfg->keybinds[THOTH_Help]  , 0}, "", 0, SCR_NORM, HelpZim, NULL));
+	AddCommand(t, CreateCommand("NewFile",(unsigned int[]){t->cfg->keybinds[THOTH_NewFile]  , 0}, "", 0, SCR_NORM, NewFile, NULL));
+	AddCommand(t, CreateCommand("CloseFile",(unsigned int[]){t->cfg->keybinds[THOTH_CloseFile]  , 0}, "", 0, SCR_NORM, CloseFile, NULL));
+	AddCommand(t, CreateCommand("SwitchFile",(unsigned int[]){t->cfg->keybinds[THOTH_SwitchFile] , 0}, "", 0, SCR_NORM, SwitchFile, NULL));
+	AddCommand(t, CreateCommand("SaveFile",(unsigned int[]){t->cfg->keybinds[THOTH_SaveFile]  , 0}, "", 0, SCR_NORM, SaveFile, NULL));
+	AddCommand(t, CreateCommand("SaveAsFile",(unsigned int[]){t->cfg->keybinds[THOTH_SaveAsFile]  , 0}, "", 0, SCR_NORM, SaveAsFile, NULL));
 
-	AddCommand(t, CreateCommand((unsigned int[]){t->cfg->keybinds[THOTH_ToggleComment]  , 0}, "", 0, SCR_NORM, ToggleComment, ToggleComment));
-	AddCommand(t, CreateCommand((unsigned int[]){t->cfg->keybinds[THOTH_ToggleCommentMulti]  , 0}, "", 0, SCR_NORM, ToggleCommentMulti, ToggleCommentMulti));
+	AddCommand(t, CreateCommand("ToggleComment",(unsigned int[]){t->cfg->keybinds[THOTH_ToggleComment]  , 0}, "", 0, SCR_NORM, ToggleComment, ToggleComment));
+	AddCommand(t, CreateCommand("ToggleCommentMulti",(unsigned int[]){t->cfg->keybinds[THOTH_ToggleCommentMulti]  , 0}, "", 0, SCR_NORM, ToggleCommentMulti, ToggleCommentMulti));
 
-	AddCommand(t, CreateCommand((unsigned int[]){t->cfg->keybinds[THOTH_MoveBrackets] , 0}, "", 0, SCR_NORM, MoveBrackets, NULL));
-	AddCommand(t, CreateCommand((unsigned int[]){t->cfg->keybinds[THOTH_SelectBrackets]  , 0}, "", 0, SCR_NORM, SelectBrackets, NULL));
+	AddCommand(t, CreateCommand("MoveBrackets",(unsigned int[]){t->cfg->keybinds[THOTH_MoveBrackets] , 0}, "", 0, SCR_NORM, MoveBrackets, NULL));
+	AddCommand(t, CreateCommand("SelectBrackets",(unsigned int[]){t->cfg->keybinds[THOTH_SelectBrackets]  , 0}, "", 0, SCR_NORM, SelectBrackets, NULL));
 
-	AddCommand(t, CreateCommand((unsigned int[]){t->cfg->keybinds[THOTH_GotoLine]  , 0}, "", 0, SCR_CENT, GotoLine, NULL));
-	AddCommand(t, CreateCommand((unsigned int[]){t->cfg->keybinds[THOTH_FindTextInsensitive]  , 0}, "", 0, SCR_CENT, FindTextInsensitive, NULL));
-	AddCommand(t, CreateCommand((unsigned int[]){t->cfg->keybinds[THOTH_FindTextZim]  , 0}, "", 0, SCR_CENT, FindTextZim, NULL));
-	AddCommand(t, CreateCommand((unsigned int[]){t->cfg->keybinds[THOTH_EventCtrlEnter]  , 0}, "", 0, SCR_CENT, EventCtrlEnter, NULL));
-	// AddCommand(t, CreateCommand((unsigned int[]){'d'|THOTH_CTRL_KEY  , 0}, "", 0, SelectNextWord, NULL));
+	AddCommand(t, CreateCommand("GotoLine",(unsigned int[]){t->cfg->keybinds[THOTH_GotoLine]  , 0}, "", 0, SCR_CENT, GotoLine, NULL));
+	AddCommand(t, CreateCommand("FindTextInsensitive",(unsigned int[]){t->cfg->keybinds[THOTH_FindTextInsensitive]  , 0}, "", 0, SCR_CENT, FindTextInsensitive, NULL));
+	AddCommand(t, CreateCommand("FindTextZim",(unsigned int[]){t->cfg->keybinds[THOTH_FindTextZim]  , 0}, "", 0, SCR_CENT, FindTextZim, NULL));
+	AddCommand(t, CreateCommand("EventCtrlEnter",(unsigned int[]){t->cfg->keybinds[THOTH_EventCtrlEnter]  , 0}, "", 0, SCR_CENT, EventCtrlEnter, NULL));
 
-	AddCommand(t, CreateCommand((unsigned int[]){t->cfg->keybinds[THOTH_SelectNextWord]  , 0}, "", 0, SCR_CENT, SelectNextWord, NULL));
-	AddCommand(t, CreateCommand((unsigned int[]){t->cfg->keybinds[THOTH_AddCursorCommand_UP]  , 0}, "", -1, SCR_NORM, AddCursorCommand, NULL));
-	AddCommand(t, CreateCommand((unsigned int[]){t->cfg->keybinds[THOTH_AddCursorCommand_DOWN]  , 0}, "", 1, SCR_NORM, AddCursorCommand, NULL));
+	AddCommand(t, CreateCommand("SelectNextWord",(unsigned int[]){t->cfg->keybinds[THOTH_SelectNextWord]  , 0}, "", 0, SCR_CENT, SelectNextWord, NULL));
+	AddCommand(t, CreateCommand("AddCursorCommand_UP",(unsigned int[]){t->cfg->keybinds[THOTH_AddCursorCommand_UP]  , 0}, "", -1, SCR_NORM, AddCursorCommand, NULL));
+	AddCommand(t, CreateCommand("AddCursorCommand_DOWN",(unsigned int[]){t->cfg->keybinds[THOTH_AddCursorCommand_DOWN]  , 0}, "", 1, SCR_NORM, AddCursorCommand, NULL));
 
-	// AddCommand(t, CreateCommand((unsigned int[]){unbound, 0}, "", -1, ExpandSelectionChars, NULL));
-	// AddCommand(t, CreateCommand((unsigned int[]){unbound, 0}, "", 1, ExpandSelectionChars, NULL));
-	AddCommand(t, CreateCommand((unsigned int[]){t->cfg->keybinds[THOTH_ExpandSelectionLines]  , 0}, "", 1, SCR_NORM, ExpandSelectionLines, NULL));
-	AddCommand(t, CreateCommand((unsigned int[]){t->cfg->keybinds[THOTH_DeleteLine] , 0}, "", 1, SCR_NORM, DeleteLine, UndoDeleteLine));
+	AddCommand(t, CreateCommand("ExpandSelectionLines",(unsigned int[]){t->cfg->keybinds[THOTH_ExpandSelectionLines]  , 0}, "", 1, SCR_NORM, ExpandSelectionLines, NULL));
+	AddCommand(t, CreateCommand("DeleteLine",(unsigned int[]){t->cfg->keybinds[THOTH_DeleteLine] , 0}, "", 1, SCR_NORM, DeleteLine, UndoDeleteLine));
 
-	AddCommand(t, CreateCommand((unsigned int[]){t->cfg->keybinds[THOTH_MoveByChars_BACK]  , 0}, "", -1, SCR_NORM, MoveByChars, NULL));
-	AddCommand(t, CreateCommand((unsigned int[]){t->cfg->keybinds[THOTH_MoveByChars_FORWARD]  , 0}, "", 1, SCR_NORM, MoveByChars, NULL));
-	AddCommand(t, CreateCommand((unsigned int[]){t->cfg->keybinds[THOTH_MoveLines_UP]  , 0}, "", -1, SCR_NORM, MoveLines, NULL));
-	AddCommand(t, CreateCommand((unsigned int[]){t->cfg->keybinds[THOTH_MoveLines_DOWN] , 0}, "", 1, SCR_NORM, MoveLines, NULL));
+	AddCommand(t, CreateCommand("MoveByChars_BACK",(unsigned int[]){t->cfg->keybinds[THOTH_MoveByChars_BACK]  , 0}, "", -1, SCR_NORM, MoveByChars, NULL));
+	AddCommand(t, CreateCommand("MoveByChars_FORWARD",(unsigned int[]){t->cfg->keybinds[THOTH_MoveByChars_FORWARD]  , 0}, "", 1, SCR_NORM, MoveByChars, NULL));
+	AddCommand(t, CreateCommand("MoveLines_UP",(unsigned int[]){t->cfg->keybinds[THOTH_MoveLines_UP]  , 0}, "", -1, SCR_NORM, MoveLines, NULL));
+	AddCommand(t, CreateCommand("MoveLines_DOWN",(unsigned int[]){t->cfg->keybinds[THOTH_MoveLines_DOWN] , 0}, "", 1, SCR_NORM, MoveLines, NULL));
 
-	AddCommand(t, CreateCommand((unsigned int[]){t->cfg->keybinds[THOTH_MoveByWords_BACK] , 0}, "", -1, SCR_NORM, MoveByWords, NULL));
-	AddCommand(t, CreateCommand((unsigned int[]){t->cfg->keybinds[THOTH_MoveByWords_FORWARD]  , 0}, "", 1, SCR_NORM, MoveByWords, NULL));
+	AddCommand(t, CreateCommand("MoveByWords_BACK",(unsigned int[]){t->cfg->keybinds[THOTH_MoveByWords_BACK] , 0}, "", -1, SCR_NORM, MoveByWords, NULL));
+	AddCommand(t, CreateCommand("MoveByWords_FORWARD",(unsigned int[]){t->cfg->keybinds[THOTH_MoveByWords_FORWARD]  , 0}, "", 1, SCR_NORM, MoveByWords, NULL));
 
-	AddCommand(t, CreateCommand((unsigned int[]){t->cfg->keybinds[THOTH_IndentLine_FORWARD]  , 0}, "", 1, SCR_NORM, IndentLine, UndoIndentLine));
-	AddCommand(t, CreateCommand((unsigned int[]){t->cfg->keybinds[THOTH_IndentLine_BACK]  , 0}, "", -1, SCR_NORM, IndentLine, UndoIndentLine));
+	AddCommand(t, CreateCommand("IndentLine_FORWARD",(unsigned int[]){t->cfg->keybinds[THOTH_IndentLine_FORWARD]  , 0}, "", 1, SCR_NORM, IndentLine, UndoIndentLine));
+	AddCommand(t, CreateCommand("IndentLine_BACK",(unsigned int[]){t->cfg->keybinds[THOTH_IndentLine_BACK]  , 0}, "", -1, SCR_NORM, IndentLine, UndoIndentLine));
 
-	AddCommand(t, CreateCommand((unsigned int[]){t->cfg->keybinds[THOTH_ExpandSelectionWords_BACK]  , 0}, "", -1, SCR_NORM, ExpandSelectionWords, NULL));
-	AddCommand(t, CreateCommand((unsigned int[]){t->cfg->keybinds[THOTH_ExpandSelectionWords_FORWARD]  , 0}, "", 1, SCR_NORM, ExpandSelectionWords, NULL));
+	AddCommand(t, CreateCommand("ExpandSelectionWords_BACK",(unsigned int[]){t->cfg->keybinds[THOTH_ExpandSelectionWords_BACK]  , 0}, "", -1, SCR_NORM, ExpandSelectionWords, NULL));
+	AddCommand(t, CreateCommand("ExpandSelectionWords_FORWARD",(unsigned int[]){t->cfg->keybinds[THOTH_ExpandSelectionWords_FORWARD]  , 0}, "", 1, SCR_NORM, ExpandSelectionWords, NULL));
 
-	AddCommand(t, CreateCommand((unsigned int[]){t->cfg->keybinds[THOTH_ScrollScreen_UP] , 0}, "", -1, SCR_CENT, ScrollScreen, NULL));
-	AddCommand(t, CreateCommand((unsigned int[]){t->cfg->keybinds[THOTH_ScrollScreen_DOWN]  , 0}, "", 1, SCR_CENT, ScrollScreen, NULL));
+	AddCommand(t, CreateCommand("ScrollScreen_UP",(unsigned int[]){t->cfg->keybinds[THOTH_ScrollScreen_UP] , 0}, "", -1, SCR_CENT, ScrollScreen, NULL));
+	AddCommand(t, CreateCommand("ScrollScreen_DOWN",(unsigned int[]){t->cfg->keybinds[THOTH_ScrollScreen_DOWN]  , 0}, "", 1, SCR_CENT, ScrollScreen, NULL));
+	AddCommand(t, CreateCommand("SelectAll",(unsigned int[]){t->cfg->keybinds[THOTH_SelectAll]  , 0}, "", 0, SCR_NORM, SelectAll, NULL));
 	
-	AddCommand(t, CreateCommand((unsigned int[]){THOTH_ARROW_LEFT  , 0}, "", -1, SCR_NORM, MoveByChars, NULL));
-	AddCommand(t, CreateCommand((unsigned int[]){THOTH_ARROW_RIGHT  , 0}, "", 1, SCR_NORM, MoveByChars, NULL));
-	AddCommand(t, CreateCommand((unsigned int[]){THOTH_ARROW_UP  , 0}, "", -1, SCR_NORM, MoveLines, NULL));
-	AddCommand(t, CreateCommand((unsigned int[]){THOTH_CTRL_KEY|'a'  , 0}, "", 0, SCR_NORM, SelectAll, NULL));
-	AddCommand(t, CreateCommand((unsigned int[]){THOTH_ARROW_DOWN  , 0}, "", 1, SCR_NORM, MoveLines, NULL));
+	AddCommand(t, CreateCommand("MoveByChars_BACK",(unsigned int[]){THOTH_ARROW_LEFT  , 0}, "", -1, SCR_NORM, MoveByChars, NULL));
+	AddCommand(t, CreateCommand("MoveByChars_FORWARD",(unsigned int[]){THOTH_ARROW_RIGHT  , 0}, "", 1, SCR_NORM, MoveByChars, NULL));
+	AddCommand(t, CreateCommand("MoveLines_UP",(unsigned int[]){THOTH_ARROW_UP  , 0}, "", -1, SCR_NORM, MoveLines, NULL));
+	AddCommand(t, CreateCommand("MoveLines_DOWN",(unsigned int[]){THOTH_ARROW_DOWN  , 0}, "", 1, SCR_NORM, MoveLines, NULL));
 
-	AddCommand(t, CreateCommand((unsigned int[]){t->cfg->keybinds[THOTH_Undo] , 0}, "", 1, SCR_CENT, Undo, NULL));
-	AddCommand(t, CreateCommand((unsigned int[]){t->cfg->keybinds[THOTH_Redo]  , 0}, "", 1, SCR_CENT, Redo, NULL));
-	AddCommand(t, CreateCommand((unsigned int[]){t->cfg->keybinds[THOTH_Cut]  , 0}, "", 1, SCR_CENT, Cut, NULL));
-	AddCommand(t, CreateCommand((unsigned int[]){t->cfg->keybinds[THOTH_Copy]  , 0}, "", 1, SCR_CENT, Copy, NULL));
-	AddCommand(t, CreateCommand((unsigned int[]){t->cfg->keybinds[THOTH_Paste] , 0}, "", 1, SCR_CENT, Paste, UndoPaste));
+	AddCommand(t, CreateCommand("Undo",(unsigned int[]){t->cfg->keybinds[THOTH_Undo] , 0}, "", 1, SCR_CENT, Undo, NULL));
+	AddCommand(t, CreateCommand("Redo",(unsigned int[]){t->cfg->keybinds[THOTH_Redo]  , 0}, "", 1, SCR_CENT, Redo, NULL));
+	AddCommand(t, CreateCommand("Cut",(unsigned int[]){t->cfg->keybinds[THOTH_Cut]  , 0}, "", 1, SCR_CENT, Cut, NULL));
+	AddCommand(t, CreateCommand("Copy",(unsigned int[]){t->cfg->keybinds[THOTH_Copy]  , 0}, "", 1, SCR_CENT, Copy, NULL));
+	AddCommand(t, CreateCommand("Paste",(unsigned int[]){t->cfg->keybinds[THOTH_Paste] , 0}, "", 1, SCR_CENT, Paste, UndoPaste));
 
 	InitCursors(t);
 	Thoth_FileBrowser_Init(&t->fileBrowser);
@@ -3901,6 +3911,7 @@ void Thoth_Editor_Draw(Thoth_Editor *t){
 
 	// wrefresh(stdscr);
 	// end logs
+	if(!t->file) return;
 	char *text = t->file->text;
 	if(!text) return;
 	
@@ -4314,23 +4325,24 @@ void Thoth_Editor_Draw(Thoth_Editor *t){
 
 void Thoth_Editor_Event(Thoth_Editor *t, unsigned int key){
 
-	if(key == 27){ // escape
-		RemoveSelections(t);
-		RemoveExtraCursors(t);
-		EndLogging(t);
-		t->lastCmd = NULL;
-		t->autoCompleteIndex = 0;
-
-
-		UpdateScrollCenter(t);
-		return;
-	}
 
 	if(key >> 8 == THOTH_ENTER_KEY >> 8){ // enter
 		EventEnter(t, key);
 		return;
 	}
-	if(key>>8){
+
+
+	if(t->logging && key == 27){ // escape
+		RemoveSelections(t);
+		EndLogging(t);
+		RemoveExtraCursors(t);
+		t->lastCmd = NULL;
+		t->autoCompleteIndex = 0;
+		UpdateScrollCenter(t);
+		return;
+	}
+
+	if((key>>8) || key == 27){// escape
 
 		if(t->logging){
 
@@ -4473,7 +4485,7 @@ void Thoth_Editor_Event(Thoth_Editor *t, unsigned int key){
 	if(key == 9){ // tab
 		if(t->logging) return;
 		ClearAutoComplete(t);
-		Thoth_EditorCmd *command = CreateCommand((const unsigned int[]){0}, "\t", 0,SCR_CENT, AddCharacters, UndoAddCharacters);
+		Thoth_EditorCmd *command = CreateCommand("AddCharacters",(const unsigned int[]){0}, "\t", 0,SCR_CENT, AddCharacters, UndoAddCharacters);
 		ExecuteCommand(t,command);
 		FreeCommand(command);
 		return;
@@ -4481,7 +4493,7 @@ void Thoth_Editor_Event(Thoth_Editor *t, unsigned int key){
 
 	if(key == 127){ // backspace
 
-		Thoth_EditorCmd *command = CreateCommand((const unsigned int[]){0}, 0, 1, SCR_CENT, RemoveCharacters, UndoRemoveCharacters);
+		Thoth_EditorCmd *command = CreateCommand("RemoveCharacters",(const unsigned int[]){0}, 0, 1, SCR_CENT, RemoveCharacters, UndoRemoveCharacters);
 		ExecuteCommand(t, command);
 		FreeCommand(command);
 		return;
@@ -4489,7 +4501,7 @@ void Thoth_Editor_Event(Thoth_Editor *t, unsigned int key){
 
 	if(key >= 32 && key <= 126){
 
-		Thoth_EditorCmd *command = CreateCommand((const unsigned int[]){0}, (const char[]){(char)key, 0}, 0, SCR_CENT, AddCharacters, UndoAddCharacters);
+		Thoth_EditorCmd *command = CreateCommand("AddCharacters",(const unsigned int[]){0}, (const char[]){(char)key, 0}, 0, SCR_CENT, AddCharacters, UndoAddCharacters);
 		ExecuteCommand(t,command);
 		FreeCommand(command);
 		return;

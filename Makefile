@@ -57,7 +57,7 @@ LDLIBS = -lm -lmingw32   $(GLEWLIBS) $(SDLLIBS) $(FREETYPELIBS)
 #	-lglew32 -lglu32 -lopengl32 \
 #	-lfreetype -lz -lpng
 #
-## LIBS = -Wl,-Bdynamic -lmingw32 -lSDL2main -lSDL2 -lopengl32 -lglew32 -Wl,-Bstatic -lpng16 -lz -lm -Llib/freetype/lib/win_cb/ -lfreetype
+# LIBS = -Wl,-Bdynamic -lmingw32 -lSDL2main -lSDL2 -lopengl32 -lglew32 -Wl,-Bstatic -lpng16 -lz -lm -Llib/freetype/lib/win_cb/ -lfreetype
 #
 
 SOURCES=main.c \
@@ -65,10 +65,15 @@ text_editor.c window.c graphics.c log.c freetype.c file_browser.c config.c json.
 
 OBJECTS=$(SOURCES:.c=.o)
 
+#all: $(SOURCES) $(EXECUTABLE)
+
+
+
 all: createResourcesO $(SOURCES) $(EXECUTABLE)
 
 $(EXECUTABLE): $(OBJECTS) icon.o
 	$(CC) $(OBJECTS) icon.o $(LDLIBS) -o $@
+
 
 createResourcesO: icon.rc
 	x86_64-w64-mingw32-windres icon.rc -o icon.o
