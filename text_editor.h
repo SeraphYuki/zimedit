@@ -140,7 +140,8 @@ typedef struct {
 	int                     colsX;
 	int                     nCommands;
 	int                     selectNextWordTerminator; // "select" not get it in the phrase selecting
-
+	int                     selectNextWordLen; 
+	
 	int                     autoCompleteSearchLen;
 	int                     autoCompleteLen;
 	int                     autoCompleteIndex;
