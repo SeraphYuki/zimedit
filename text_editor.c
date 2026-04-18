@@ -665,6 +665,7 @@ static void MoveCursorsAndSelection(Thoth_Editor *t, int pos, int by, int *curso
 
 static void RemoveSelections(Thoth_Editor *t){
 	
+	t->selectNextWordLen = 0;
 	t->selectNextWordTerminator = 0;    
 	ClearAutoComplete(t);
 
@@ -715,31 +716,28 @@ static int MoveByWordsFunc(char *text, int len, int start, int dir){
 
 	if(dir < 0 && start > 0){
 		
-		if(text[start-1] == '\n'){
-
+		if(text[start] == '\n'){
 			start -= 1;
-
+		}
+		
+		// @#$|(a)sdff
+		if((!IsToken(text[start] && IsToken(text[start-1])))
+		|| text[start] == '\n'){
+			start--;
 		} else {
+			start--;
 
-			// @#$|(a)sdff
-			if((!IsToken(text[start] && IsToken(text[start-1])))
-			|| text[start] == '\n'){
-				start--;
-			} else {
-				start--;
+			if(IsToken(text[start]))
+				start -= 1;
 
-				if(IsToken(text[start]))
-					start -= 1;
-
-				if(text[start] != '\n' && IsToken(text[start])){
-					while(start >= 0){
-						char c = text[--start];
-						if(c == '\n') { ++start; break; }
-						if(!IsToken(c)) { ++start; break; }
-					}
-				} else {
-					start = GetWordStart(text, start); 
+			if(text[start] != '\n' && IsToken(text[start])){
+				while(start >= 0){
+					char c = text[--start];
+					if(c == '\n') { ++start; break; }
+					if(!IsToken(c)) { ++start; break; }
 				}
+			} else {
+				start = GetWordStart(text, start); 
 			}
 		}
 
@@ -1148,6 +1146,7 @@ static void RefreshFile(Thoth_Editor *t){
 	ClearAutoComplete(t);
 	FileBrowserPath(t);
 	t->selectNextWordTerminator = 0;
+	t->selectNextWordLen = 0;
 }
 static void NewFile(Thoth_Editor *t, Thoth_EditorCmd *c){
 	Thoth_Editor_LoadFile(t, NULL);
@@ -1493,10 +1492,11 @@ static void SelectNextWord(Thoth_Editor *t, Thoth_EditorCmd *c){
 		startPos = prev->selection.startCursorPos;
 		end = startPos+prev->selection.len;
 		
-		
-		int len = !c->num ? prev->selection.len : c->num;
-		if(!c->num) c->num = len;
-
+		int len = t->selectNextWordLen;
+		if(!t->selectNextWordLen){
+			len = prev->selection.len;
+			t->selectNextWordLen = len;
+		}
 		int next = 0;
 
 		while(next >= 0){
