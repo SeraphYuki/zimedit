@@ -6,7 +6,7 @@ New <b>colorscheme</b> is: https://github.com/morhetz/gruvbox<br>
 ![Screenshot](Screenshots/Screenshot.png)
 <br><hr>
 	 <b>SelectNextWord</b> Find/Replace, CTRL+D In sublime text ||| <b>AddCursorCommand</b> Up/Down<br>
-	 <p>![Screenshot](Screenshots/selectcursors.gif) ![Screenshot](Screenshots/cursors.gif)<br></p>
+	 <p>![Screenshot](Screenshots/cursors.gif)<br></p>
 	 <b>MoveLines</b> Up/Down ||| <b>MoveByWords</b> Left/Right <b>MoveByChars</b> Left/Right/Up/Down<br>
 	 <p>![Screenshot](Screenshots/movelines.gif)  ![Screenshot](Screenshots/navigation.gif)<br></p>
 	 <b>ExpandSelectionWords</b> Left/Right ||| <b>IndentLine</b> Left/Right<br>
