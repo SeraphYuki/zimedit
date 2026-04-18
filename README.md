@@ -5,10 +5,9 @@ New <b>colorscheme</b> is: https://github.com/morhetz/gruvbox<br>
 <b>font</b>: https://github.com/larsenwork/monoid<br>
 ![Screenshot](Screenshots/Screenshot.png)
 <br><hr>
-	 <b>MoveLines</b> Up/Down ||| <b>MoveByWords</b> Left/Right <b>MoveByChars</b> Left/Right/Up/Down<br>
-	 <p>![Screenshot](Screenshots/movelines.gif)  ![Screenshot](Screenshots/navigation.gif)<br></p>
-	 <p>![Screenshot](Screenshots/selections.gif)<br></p>
-	 <p>![Screenshot](Screenshots/undo.gif) ![Screenshot](Screenshots/autocomplete.gif)<br></p>
+	 <p><img src="Screenshots/movelines.gif" width="50%">  <img src="Screenshots/navigation.gif" width="50%"><br></p>
+	 <p><img src="Screenshots/undo.gif" width="50%"> <img src="Screenshots/autocomplete.gif" width="50%"><br></p>
+	 <p><img src="Screenshots/selections.gif" width="50%"><br></p>
 	 
 	 
 	 
