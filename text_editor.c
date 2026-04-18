@@ -1492,8 +1492,10 @@ static void SelectNextWord(Thoth_Editor *t, Thoth_EditorCmd *c){
 
 		startPos = prev->selection.startCursorPos;
 		end = startPos+prev->selection.len;
-
-		int len = prev->selection.len;
+		
+		
+		int len = !c->num ? prev->selection.len : c->num;
+		if(!c->num) c->num = len;
 
 		int next = 0;
 
