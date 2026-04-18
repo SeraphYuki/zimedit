@@ -4,16 +4,18 @@ https://rotatedev.itch.io/zim BINARIES<br>
 New <b>colorscheme</b> is: https://github.com/morhetz/gruvbox<br>
 <b>font</b>: https://github.com/larsenwork/monoid<br>
 ![Screenshot](Screenshots/Screenshot.png)
-<br><hr>
-	 <p><img src="Screenshots/movelines.gif" width="50%">  <img src="Screenshots/navigation.gif" width="50%"><br></p>
-	 <p><img src="Screenshots/undo.gif" width="50%"> <img src="Screenshots/autocomplete.gif" width="50%"><br></p>
-	 <p><img src="Screenshots/selections.gif" width="50%"><br></p>
+<br>
+	 <div style="display:inline-block"><img src="Screenshots/movelines.gif" width="40%">  <img src="Screenshots/navigation.gif" width="40%"></div>
+	 <div style="display:inline-block"><img src="Screenshots/undo.gif" width="40%"> <img src="Screenshots/autocomplete.gif" width="40%"><br></div>
+	 <div style="display:inline-block"><img src="Screenshots/selections.gif" width="40%"></div>
 	 
 	 
 	 
 ![Screenshot](Screenshots/Screenshot.gif)<br>
 ![Screenshot](Screenshots/lib.gif)<br><br>
 <b>TODO</b>:<br>
+bug selectnextword, resolvecursorcollision makes the selection double for matched right after.
+
 copy/paste bugs<br>
 convert spaces to tabs, macro. <br>
 Have only the active file in memory AND swap files<br>
@@ -76,4 +78,3 @@ ctrl+w Close file<br>
 
 <br>
 Deveoloped while bedridden after I got hit by a car on a moped.<br>
-

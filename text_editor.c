@@ -577,9 +577,29 @@ static void ResolveCursorCollisions(Thoth_Editor *t, int *cursorIndex){
 					Thoth_EditorCur *c2 = &t->cursors[f];
 
 					if((c1->selection.len && c2->selection.len && 
-					((c1->selection.startCursorPos <= c2->selection.startCursorPos + c2->selection.len)
+					((c1->selection.startCursorPos <= c2->selection.startCursorPos + 
+					c2->selection.len)
 						&& c1->selection.startCursorPos >= c2->selection.startCursorPos)) ||
 						 c1->pos == c2->pos){
+
+						// absorb selection
+						if((c1->selection.startCursorPos < c2->selection.startCursorPos && (c2->selection.startCursorPos <= 
+							c1->selection.startCursorPos+c1->selection.len))){
+
+							int overlap = c2->selection.startCursorPos - 
+							(c1->selection.startCursorPos+c1->selection.len);
+							
+							c2->selection.startCursorPos = c1->selection.startCursorPos;
+							c2->selection.len = (c2->selection.len + c1->selection.len) - overlap;
+						}
+						if((c2->selection.startCursorPos < c1->selection.startCursorPos && (c1->selection.startCursorPos <= 
+							c2->selection.startCursorPos+c2->selection.len))){
+
+							int overlap = c1->selection.startCursorPos - 
+							(c2->selection.startCursorPos+c2->selection.len);
+							
+							c2->selection.len = (c2->selection.len + c1->selection.len) - overlap;
+						}
 					
 
 					if(j+1 < t->nCursors){
@@ -607,6 +627,7 @@ static void ResolveCursorCollisions(Thoth_Editor *t, int *cursorIndex){
 					for(m = j; m < t->nCursors-1; m++){
 						t->cursors[m] = t->cursors[m+1];
 					}
+
 
 					t->cursors = realloc(t->cursors, --t->nCursors * sizeof(Thoth_EditorCur));                 
 
@@ -1472,14 +1493,12 @@ static void SelectNextWord(Thoth_Editor *t, Thoth_EditorCmd *c){
 		startPos = prev->selection.startCursorPos;
 		end = startPos+prev->selection.len;
 
-		int len = end-startPos;
+		int len = prev->selection.len;
 
 		int next = 0;
 
 		while(next >= 0){
-
 			next = Find(&t->file->text[end], &t->file->text[startPos], len);
-
 			if(next >= 0){
 				if(t->selectNextWordTerminator && !IsToken(t->file->text[end+next+len])){
 					end += next+len;
@@ -1488,7 +1507,7 @@ static void SelectNextWord(Thoth_Editor *t, Thoth_EditorCmd *c){
 			}
 			break;
 		}
-
+		
 		if(next >= 0){
 			next += end;
 			Thoth_EditorCur *cursor = AddCursor(t);
@@ -1502,6 +1521,7 @@ static void SelectNextWord(Thoth_Editor *t, Thoth_EditorCmd *c){
 				cursor->pos = next+len;
 				cursor->selection.startCursorPos = next;
 				cursor->selection.len = len;
+				
 			}
 		}
 		
@@ -2168,9 +2188,9 @@ static void ExpandSelectionLines(Thoth_Editor *t, Thoth_EditorCmd *c){
 
 static void RemoveExtraCursorsCommand(Thoth_Editor *t, Thoth_EditorCmd *c){
 	SaveCursors(t,c);
-	RemoveExtraCursors(t);
 	RemoveSelections(t);
-	//t->lastCmd = NULL;
+	RemoveExtraCursors(t);
+	t->lastCmd = NULL;
 	t->autoCompleteIndex = 0;
 	UpdateScrollCenter(t);
 }
