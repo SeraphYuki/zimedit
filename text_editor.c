@@ -56,7 +56,7 @@ enum {
 #endif
 
 
-static void ToggleComment(Thoth_Editor *t, Thoth_EditorCmd *c);
+static void Comment(Thoth_Editor *t, Thoth_EditorCmd *c);
 static void ToggleCommentMulti(Thoth_Editor *t, Thoth_EditorCmd *c);
 static void PutsCursor(Thoth_Editor *t, Thoth_EditorCur c);
 static void LoggingMoveLines(Thoth_Editor *t, int num);
@@ -153,7 +153,7 @@ static void RedoCommands(Thoth_Editor *t, int num);
 static void RemoveExtraCursors(Thoth_Editor *t);
 static void ExecuteCommand(Thoth_Editor *t ,Thoth_EditorCmd *c);
 static void AddCommand(Thoth_Editor *t, Thoth_EditorCmd *c);
-static char *basename(char *path);
+static char *Thoth_basename(char *path);
 
 const char *keywords[] = {
 	"int8", "int16", "int32", "int64", "break", "and", "case", "continue", "default", "do", "else", "false", "for", "if", "namespace",
@@ -164,7 +164,7 @@ const char *keywords[] = {
 	"ifdef", "struct", "unsigned","def",
 };
 
-static char *basename(char *path){
+static char *Thoth_basename(char *path){
 	int j;
 	for(j = strlen(path)-1; j >= 0; j--)
 		if(path[j] == '/' || path[j] == '\\')
@@ -1046,7 +1046,7 @@ static void LogLineSelectorEnter(Thoth_Editor *t){
 	for(k = 0; k < nFiles; k++){
 		char *name = t->logging == THOTH_LOGMODE_FILEBROWSER ? t->fileBrowser.files[k].name : t->files[k]->name;
 		int nameLen = strlen(name);
-		char *logName = t->loggingText ? basename(t->loggingText) : NULL;
+		char *logName = t->loggingText ? Thoth_basename(t->loggingText) : NULL;
 		int logNameLen = logName ? strlen(logName) : 0;
 
 		if(logNameLen <= nameLen){
@@ -1927,17 +1927,38 @@ static void ToggleCommentMulti(Thoth_Editor *t, Thoth_EditorCmd *c){
 	}
 
 	SaveCursors(t,c);
-
-
 }
 
-static void ToggleComment(Thoth_Editor *t, Thoth_EditorCmd *c){
+static void Comment(Thoth_Editor *t, Thoth_EditorCmd *c){
 
 	if(!t->file->text) return;
 
 	t->file->textLen = strlen(t->file->text);
 
 	LoadCursors(t,c);
+
+	if(c->hiddenCursors){
+		RemoveSelections(t);
+		int k;
+		for(k = 0; k < c->nHiddenCursors; k++){
+			int index = c->hiddenCursors[k].hiddenIndex;
+			t->cursors[index].pos = c->hiddenCursors[k].pos;
+
+			if(c->hiddenCursors[k].addedLen){
+				AddStrToText(t, &index, "//");
+				int m;
+				for(m = k; m < c->nHiddenCursors; m++) c->hiddenCursors[m].pos+=2;
+			}
+
+			if(c->hiddenCursors[k].savedText){
+				RemoveStrFromText(t, &index, 2);
+				int m;
+				for(m = k; m < c->nHiddenCursors; m++) c->hiddenCursors[m].pos-=2;
+			}
+		}
+		return;
+	}
+
 
 	int k;
 	for(k = 0; k < t->nCursors; k++){
@@ -1956,6 +1977,12 @@ static void ToggleComment(Thoth_Editor *t, Thoth_EditorCmd *c){
 				if(t->file->text[j] == '/' && t->file->text[j-1] == '/') {
 					t->cursors[k].pos = j+1;
 					RemoveStrFromText(t, &k, 2);
+					c->hiddenCursors = (Thoth_EditorCur *)realloc(c->hiddenCursors, sizeof(Thoth_EditorCur) * ++c->nHiddenCursors);
+					Thoth_EditorCur *cur = &c->hiddenCursors[c->nHiddenCursors-1];			
+					memset(cur, 0, sizeof(Thoth_EditorCur));
+					cur->pos = t->cursors[k].pos;
+					cur->savedText = malloc(3);
+					strcpy(cur->savedText,"//");
 					toggled = 1;
 					break;
 				}
@@ -1970,9 +1997,15 @@ static void ToggleComment(Thoth_Editor *t, Thoth_EditorCmd *c){
 			t->cursors[k].pos = m;
 			AddStrToText(t, &k, "//");
 			
+			c->hiddenCursors = (Thoth_EditorCur *)realloc(c->hiddenCursors, sizeof(Thoth_EditorCur) * ++c->nHiddenCursors);
+			Thoth_EditorCur *cur = &c->hiddenCursors[c->nHiddenCursors-1];			
+			memset(cur, 0, sizeof(Thoth_EditorCur));
+			cur->addedLen = 2;
+			cur->pos = m+2;
 			continue;
 		}
 
+		int toggled = 0;
 		int startSelection = t->cursors[k].selection.startCursorPos;
 		int endSelection = t->cursors[k].selection.startCursorPos+t->cursors[k].selection.len;
 		int m;
@@ -1981,17 +2014,34 @@ static void ToggleComment(Thoth_Editor *t, Thoth_EditorCmd *c){
 			while((t->file->text[m] == '\t' || t->file->text[m] == ' ')
 			 && m < endSelection) m++;
 			
-			//if(t->file->text[m] == '\n') continue;
+			if(t->file->text[m] == '\n') continue;
 			
-			if(strncmp(&t->file->text[m], "//", 2) == 0) {
+			if((!toggled || toggled == 1) && strncmp(&t->file->text[m], "//", 2) == 0) {
 				t->cursors[k].pos = m+2;
+				toggled = 1;
 				RemoveStrFromText(t, &k, 2);
 				endSelection -= 2;
-			} else {
+
+				c->hiddenCursors = (Thoth_EditorCur *)realloc(c->hiddenCursors, sizeof(Thoth_EditorCur) * ++c->nHiddenCursors);
+				Thoth_EditorCur *cur = &c->hiddenCursors[c->nHiddenCursors-1];			
+				memset(cur, 0, sizeof(Thoth_EditorCur));
+				cur->pos = t->cursors[k].pos;
+				cur->savedText = malloc(3);
+				strcpy(cur->savedText,"//");
+
+			} else if(!toggled || toggled == 2){
+
+				c->hiddenCursors = (Thoth_EditorCur *)realloc(c->hiddenCursors, sizeof(Thoth_EditorCur) * ++c->nHiddenCursors);
+				Thoth_EditorCur *cur = &c->hiddenCursors[c->nHiddenCursors-1];			
+				memset(cur, 0, sizeof(Thoth_EditorCur));
+				cur->addedLen = 2;
+				cur->pos = m+2;
+
 				t->cursors[k].pos = m;
 				AddStrToText(t, &k, "//");
 				endSelection+=2;
 				m += 2;
+				toggled = 2;
 			}
 
 			t->cursors[k].pos = startSelection;
@@ -2003,6 +2053,34 @@ static void ToggleComment(Thoth_Editor *t, Thoth_EditorCmd *c){
 
 	SaveCursors(t,c);
 }
+
+static void UndoComment(Thoth_Editor *t, Thoth_EditorCmd *c){
+	LoadCursors(t, c);
+
+	RemoveExtraCursors(t);
+	RemoveSelections(t);
+	int k;
+	for(k = 0; k < c->nHiddenCursors; k++){
+		int index = c->hiddenCursors[k].hiddenIndex;
+		t->cursors[index].pos = c->hiddenCursors[k].pos;
+
+		if(c->hiddenCursors[k].addedLen){
+			RemoveStrFromText(t, &index, c->hiddenCursors[k].addedLen);
+			int m;
+			for(m = k; m < c->nHiddenCursors; m++) c->hiddenCursors[m].pos-=c->hiddenCursors[k].addedLen;
+		}
+
+		if(k < c->nHiddenCursors && c->hiddenCursors[k].savedText){
+			AddStrToText(t, &index, c->hiddenCursors[k].savedText);
+			int m;
+			for(m = k; m < c->nHiddenCursors; m++) c->hiddenCursors[m].pos+=strlen(c->hiddenCursors[k].savedText);
+		}
+	}
+
+	SaveCursors(t, c);
+
+}
+
 
 static void MoveBrackets(Thoth_Editor *t, Thoth_EditorCmd *c){
 
@@ -2696,9 +2774,9 @@ static void LoggingMoveLines(Thoth_Editor *t, int num){
 			for(k = 0; k < nFiles; k++){
 				char *name = t->logging == THOTH_LOGMODE_FILEBROWSER ? t->fileBrowser.files[k].name : t->files[k]->name;
 				int nameLen = strlen(name);
-				int logNameLen = strlen(basename(t->loggingText));
+				int logNameLen = strlen(Thoth_basename(t->loggingText));
 				if(logNameLen <= nameLen){
-					if(CaseLowerStrnCmp(basename(t->loggingText), name, logNameLen))
+					if(CaseLowerStrnCmp(Thoth_basename(t->loggingText), name, logNameLen))
 						nMatching++;
 
 				}
@@ -3389,7 +3467,7 @@ void Thoth_Editor_Init(Thoth_Editor *t,Thoth_Config *cfg){
 	AddCommand(t, CreateCommand("SaveFile",(unsigned int[]){t->cfg->keybinds[THOTH_SaveFile]  , 0}, "", 0, SCR_NORM, SaveFile, NULL));
 	AddCommand(t, CreateCommand("SaveAsFile",(unsigned int[]){t->cfg->keybinds[THOTH_SaveAsFile]  , 0}, "", 0, SCR_NORM, SaveAsFile, NULL));
 
-	AddCommand(t, CreateCommand("ToggleComment",(unsigned int[]){t->cfg->keybinds[THOTH_ToggleComment]  , 0}, "", 0, SCR_NORM, ToggleComment, ToggleComment));
+	AddCommand(t, CreateCommand("Comment",(unsigned int[]){t->cfg->keybinds[THOTH_Comment]  , 0}, "", 0, SCR_NORM, Comment, UndoComment));
 	AddCommand(t, CreateCommand("ToggleCommentMulti",(unsigned int[]){t->cfg->keybinds[THOTH_ToggleCommentMulti]  , 0}, "", 0, SCR_NORM, ToggleCommentMulti, ToggleCommentMulti));
 
 	AddCommand(t, CreateCommand("MoveBrackets",(unsigned int[]){t->cfg->keybinds[THOTH_MoveBrackets] , 0}, "", 0, SCR_NORM, MoveBrackets, NULL));
@@ -3854,7 +3932,7 @@ void Thoth_Editor_Draw(Thoth_Editor *t){
 				int nameLen = strlen(name);
 				char *logName = t->loggingText;
 				if(THOTH_LOGMODE_FILEBROWSER && t->loggingText){
-					logName = basename(t->loggingText);
+					logName = Thoth_basename(t->loggingText);
 				}
 				int logNameLen = logName ? strlen(logName) : 0;
 

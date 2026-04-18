@@ -470,9 +470,7 @@ void Thoth_Graphics_Render(Thoth_Graphics *graphics){
 void Thoth_Graphics_Clear(Thoth_Graphics *graphics){
 	glBindFramebuffer(GL_FRAMEBUFFER, graphics->fb_g);
 	glViewport(graphics->viewport.x, graphics->viewport.y, graphics->viewport.w, graphics->viewport.h);
-
 	glClearColor(graphics->cfg->colors[THOTH_COLOR_BG].r,graphics->cfg->colors[THOTH_COLOR_BG].g,graphics->cfg->colors[THOTH_COLOR_BG].b,1);
-
 	glClear(GL_COLOR_BUFFER_BIT);
 	glCullFace(GL_BACK);
 }

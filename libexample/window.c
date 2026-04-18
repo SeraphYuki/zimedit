@@ -2,8 +2,8 @@
 #define GLEW_STATIC
 #endif
 #include <GL/glew.h>
-#include <SDL3/SDL.h>
-#include <SDL3/SDL_opengl.h>
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_opengl.h>
 #include "window.h"
 #include "types.h"
 #include "log.h"
@@ -23,6 +23,8 @@ int Window_Open(){
 
 	window = SDL_CreateWindow(
 		WINDOW_TITLE,
+		0,
+		0,
 		WINDOW_INIT_WIDTH,
 		WINDOW_INIT_HEIGHT,
 		SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE
@@ -34,7 +36,7 @@ int Window_Open(){
 
 	context = SDL_GL_CreateContext(window);
 	SDL_GL_SetSwapInterval(1);
-	SDL_StartTextInput(window);
+	SDL_StartTextInput();
 
 	glewExperimental = GL_TRUE;
 
@@ -45,8 +47,8 @@ int Window_Open(){
 
 	glDisable(GL_DITHER);
 	glDisable(GL_DEPTH_TEST);
-	// glEnable(GL_STENCIL_TEST);
-	// glStencilOp(GL_REPLACE, GL_KEEP, GL_KEEP);
+	 //glEnable(GL_STENCIL_TEST);
+	 //glStencilOp(GL_REPLACE, GL_KEEP, GL_KEEP);
 	glEnable(GL_CULL_FACE);
 	glDisable(GL_LINE_SMOOTH);
 	glCullFace(GL_BACK);
@@ -59,7 +61,7 @@ int Window_Open(){
 
 void Window_Close(){
 
-    SDL_GL_DestroyContext(context);
+    SDL_GL_DeleteContext(context);
 	 SDL_DestroyWindow(window);
 	 SDL_Quit();
 }

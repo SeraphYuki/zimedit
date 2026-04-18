@@ -65,6 +65,9 @@ static void MouseMotionUpdate(Thoth_t *t){
 void Event(Thoth_t *t, SDL_Event ev){
 #else
 void Event(Thoth_t *t){
+
+
+
 	SDL_Event ev;
 	if(t->te.logging == THOTH_LOGMODE_CONSOLE){
 		if(!SDL_WaitEventTimeout(&ev, 1000)){
@@ -81,6 +84,107 @@ void Event(Thoth_t *t){
 	}
 #endif
 
+#ifdef SDL3_COMPILE
+	//if(ev.type == SDL_DROPFILE){
+		//char drop[512];
+		//strcpy(drop, ev.drop.data);
+		//Thoth_Editor_LoadFile(&t->te, drop);
+		//t->state = THOTH_STATE_UPDATEDRAW;
+		//return;
+	//}
+	if(ev.type == SDL_EVENT_QUIT){
+		t->state = THOTH_STATE_QUIT;
+		return;
+	}
+
+	if(ev.type == SDL_EVENT_MOUSE_BUTTON_DOWN && ev.button.button == SDL_BUTTON_LEFT){
+
+		if(!t->mousedown){
+			int x = ev.button.x / Thoth_Graphics_FontWidth(&t->graphics);
+			int y = ev.button.y / Thoth_Graphics_FontHeight(&t->graphics);
+			// if(ev.button.clicks >= 2) 
+				// Thoth_Editor_SetCursorPosDoubleClick(&t->te, x, y);
+			// else{
+				Thoth_Editor_SetCursorPos(&t->te, x, y);
+				t->mousedown = 1;
+				t->mousex = x;
+				t->mousey = y;
+			// }
+			t->state = THOTH_STATE_UPDATEDRAW;
+			return;
+		}
+	}
+
+	if(ev.type == SDL_EVENT_MOUSE_BUTTON_UP && ev.button.button == SDL_BUTTON_LEFT){
+		t->mousedown = 0;
+		return;
+	}
+	if(ev.type == SDL_EVENT_MOUSE_MOTION){
+		if(t->mousedown){
+			int x = ev.motion.x / Thoth_Graphics_FontWidth(&t->graphics);
+			int y = ev.motion.y / Thoth_Graphics_FontHeight(&t->graphics);
+			t->mousex = x;
+			t->mousey = y;
+			MouseMotionUpdate(t);
+			return;
+		}
+	}
+	
+	if(ev.type == SDL_EVENT_KEY_DOWN){
+		
+		int key = t->key & THOTH_ENTER_KEY ? t->key ^ THOTH_ENTER_KEY : t->key;
+
+
+		if(ev.key.key == SDLK_RETURN) key |= THOTH_ENTER_KEY;
+		else if(ev.key.key == SDLK_TAB) key = 9;
+		else if(ev.key.key == SDLK_ESCAPE) key = 27;
+		else if(ev.key.key == SDLK_BACKSPACE) key = 127;
+		else if(ev.key.key == SDLK_LSHIFT || ev.key.key == SDLK_RSHIFT) key |= THOTH_SHIFT_KEY;
+		else if(ev.key.key == SDLK_LALT || ev.key.key == SDLK_RALT) key |= THOTH_ALT_KEY;
+		else if(ev.key.key == SDLK_LCTRL || ev.key.key == SDLK_RCTRL) key |= THOTH_CTRL_KEY;
+		else if(ev.key.key == SDLK_RIGHT) key |= THOTH_ARROW_RIGHT;
+		else if(ev.key.key == SDLK_UP) key |= THOTH_ARROW_UP;
+		else if(ev.key.key == SDLK_LEFT) key |= THOTH_ARROW_LEFT;
+		else if(ev.key.key == SDLK_DOWN) key |= THOTH_ARROW_DOWN;
+		else if(key & THOTH_CTRL_KEY)
+			key = (t->key&0xFF00) | (ev.key.key & 0xFF);
+
+		if(key != t->key || key & THOTH_ARROW_RIGHT || key & THOTH_ARROW_UP || key & THOTH_ARROW_DOWN || key & THOTH_ARROW_LEFT)
+			t->state = THOTH_STATE_UPDATE;
+			
+		t->key = key;
+
+
+
+	} else if(ev.type == SDL_EVENT_KEY_UP) {
+
+		if(ev.key.key == SDLK_LSHIFT || ev.key.key == SDLK_RSHIFT) t->key ^= THOTH_SHIFT_KEY;
+		else if(ev.key.key == SDLK_LALT || ev.key.key == SDLK_RALT) t->key ^= THOTH_ALT_KEY;
+		else if(ev.key.key == SDLK_LCTRL || ev.key.key == SDLK_RCTRL) t->key ^= THOTH_CTRL_KEY;
+		else if(ev.key.key == SDLK_RETURN) t->key ^= THOTH_ENTER_KEY;
+		else if(ev.key.key == SDLK_RIGHT) t->key ^= THOTH_ARROW_RIGHT;
+		else if(ev.key.key == SDLK_UP) t->key ^= THOTH_ARROW_UP;
+		else if(ev.key.key == SDLK_LEFT) t->key ^= THOTH_ARROW_LEFT;
+		else if(ev.key.key == SDLK_DOWN) t->key ^= THOTH_ARROW_DOWN;
+
+
+	} else if(ev.type == SDL_EVENT_TEXT_INPUT){
+		t->key = (t->key&0xFF00) | (ev.text.text[0] & 0xFF);
+		t->state = THOTH_STATE_UPDATE;        
+
+#ifndef LIBRARY_COMPILE
+	} else if(ev.type == SDL_EVENT_WINDOW_RESIZED){
+		Thoth_Graphics_ViewportXY(&t->graphics, 0, 0);
+		Thoth_Graphics_Resize(&t->graphics, ev.window.data1, ev.window.data2);
+		Thoth_Graphics_Clear(&t->graphics);
+		Thoth_Editor_Draw(&t->te, &t->graphics);        
+		Thoth_Graphics_Render(&t->graphics);
+		Window_Swap();
+#endif
+	}
+
+
+#else
 	//if(ev.type == SDL_DROPFILE){
 		//char drop[512];
 		//strcpy(drop, ev.drop.data);
@@ -130,6 +234,7 @@ void Event(Thoth_t *t){
 		
 		int key = t->key & THOTH_ENTER_KEY ? t->key ^ THOTH_ENTER_KEY : t->key;
 
+
 		if(ev.key.keysym.sym == SDLK_RETURN) key |= THOTH_ENTER_KEY;
 		else if(ev.key.keysym.sym == SDLK_TAB) key = 9;
 		else if(ev.key.keysym.sym == SDLK_ESCAPE) key = 27;
@@ -167,7 +272,6 @@ void Event(Thoth_t *t){
 		t->key = (t->key&0xFF00) | (ev.text.text[0] & 0xFF);
 		t->state = THOTH_STATE_UPDATE;        
 
-
 #ifndef LIBRARY_COMPILE
 	} else if(ev.type == SDL_WINDOWEVENT_RESIZED || ev.type == SDL_WINDOWEVENT_SIZE_CHANGED){
 		Thoth_Graphics_ViewportXY(&t->graphics, 0, 0);
@@ -178,6 +282,7 @@ void Event(Thoth_t *t){
 		Window_Swap();
 #endif
 	}
+#endif
 }
 
 #ifdef LIBRARY_COMPILE
@@ -213,7 +318,6 @@ Thoth_t *Thoth_Create(int w, int h){
 
 int Thoth_Event(Thoth_t *t, SDL_Event ev){
 
-	Thoth_Graphics_Clear(&t->graphics);
 	Event(t, ev);
 
    if(t->state == THOTH_STATE_UPDATE || t->state == THOTH_STATE_UPDATEDRAW){
@@ -279,7 +383,7 @@ int main(int argc, char **argv){
 		Thoth_Editor_LoadFile(&t.te, NULL);
 
 
-	SDL_StartTextInput();
+	SDL_StartTextInput(Window_GetWindow());
 	// u32 currTime;
 	// u32 frames = 0;
 	// u32 lastSecond = SDL_GetTicks();

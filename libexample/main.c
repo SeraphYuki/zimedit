@@ -15,23 +15,22 @@ int main(int argc, char **argv){
 
     int quit = 0;
 	 while(1){
-	     glClear(GL_COLOR_BUFFER_BIT);
 	     SDL_Event ev;
 	     while(SDL_PollEvent(&ev)){
-	         Thoth_Event(thoth, ev);
-	         if(ev.type == SDL_QUIT) {quit = 1; break;}
-	         if(ev.window.event == SDL_WINDOWEVENT_RESIZED || 
-	             ev.window.event == SDL_WINDOWEVENT_SIZE_CHANGED){
-	             int w = ev.window.data1;
-	             int h = ev.window.data2;
+	      Thoth_Event(thoth, ev);
+		printf("%f\n",thoth->cfg.colors[0].b);
+		if(ev.type == SDL_QUIT) {quit = 1; break;}
+	      if(ev.window.event == SDL_WINDOWEVENT_RESIZED || 
+	          ev.window.event == SDL_WINDOWEVENT_SIZE_CHANGED){
+	          int w = ev.window.data1;
+	          int h = ev.window.data2;
 
-                Thoth_Resize(thoth, 0, 0, w, h);
-	         }
-	     }
+             Thoth_Resize(thoth, 0, 0, w, h);
+	      }
 	     if(quit) break;
-	     Thoth_Render(thoth); //stencil buffer/framebuffer access todo
-
+	     Thoth_Render(thoth);//p stencil buffer/framebuffer access todo
         Window_Swap();
+			}
 	 }
 
     Thoth_Destroy(thoth);

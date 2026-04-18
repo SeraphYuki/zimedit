@@ -10,6 +10,7 @@ enum {
 	THOTH_OpenFileBrowser,
 	THOTH_Help,
 	THOTH_OpenFileZim,
+	THOTH_RemoveExtraCursors,
 	THOTH_NewFile,
 	THOTH_CloseFile,
 	THOTH_SwitchFile,
@@ -52,7 +53,7 @@ enum {
 };
 
 enum {
-	THOTH_COLOR_CYAN = 1,
+	THOTH_COLOR_CYAN = 0,
 	THOTH_COLOR_RED,
 	THOTH_COLOR_YELLOW,
 	THOTH_COLOR_BLUE,
@@ -94,16 +95,9 @@ enum {
 };
 
 typedef struct {
-#ifdef SDL_COMPILE
 	float r;
 	float g;
 	float b;
-#else
-	int r;
-	int g;
-	int b;
-
-#endif
 } Thoth_RGBColor;
 
 typedef struct {

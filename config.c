@@ -102,8 +102,8 @@ static void ConfigRead(JSON_Value *val, Thoth_Config *cfg){
 				 	ReadCommand(val, &cfg->keybinds[THOTH_SaveAsFile]);
 				 else if(strcmp(val->key, "SaveFile") == 0)
 				 	ReadCommand(val, &cfg->keybinds[THOTH_SaveFile]);
-				 else if(strcmp(val->key, "ToggleComment") == 0)
-				 	ReadCommand(val, &cfg->keybinds[THOTH_ToggleComment]);
+				 else if(strcmp(val->key, "Comment") == 0)
+				 	ReadCommand(val, &cfg->keybinds[THOTH_Comment]);
 				 else if(strcmp(val->key, "ToggleCommentMulti") == 0)
 				 	ReadCommand(val, &cfg->keybinds[THOTH_ToggleCommentMulti]);
 				 else if(strcmp(val->key, "MoveBrackets") == 0)
@@ -187,15 +187,15 @@ void Thoth_Config_Read(Thoth_Config *cfg){
 	
 	int k;
 	for(k = 0; k < THOTH_NUM_COLORS; k++){
-	#ifdef WINDOWS_COMPILE
-		cfg->colors[k].r = (int)defaultColors[k].r << 16;
-		cfg->colors[k].g = (int)defaultColors[k].g << 8;
-		cfg->colors[k].b = defaultColors[k].b & 0xFF;
-	#else
-		cfg->colors[k].r = defaultColors[k].r*1000/255;
-		cfg->colors[k].g = defaultColors[k].g*1000/255;
-		cfg->colors[k].b = defaultColors[k].b*1000/255;
-	#endif
+	//#ifdef WINDOWS_COMPILE
+		//cfg->colors[k].r = (int)defaultColors[k].r << 16;
+		//cfg->colors[k].g = (int)defaultColors[k].g << 8;
+		//cfg->colors[k].b = defaultColors[k].b & 0xFF;
+	//#else
+		cfg->colors[k].r = defaultColors[k].r/255.0f;
+		cfg->colors[k].g = defaultColors[k].g/255.0f;
+		cfg->colors[k].b = defaultColors[k].b/255.0f;
+	//#endif
 	}
 
 	#ifdef LINUX_COMPILE
@@ -216,7 +216,7 @@ void Thoth_Config_Read(Thoth_Config *cfg){
 	cfg->keybinds[THOTH_SwitchFile] = THOTH_CTRL_KEY|'p';
 	cfg->keybinds[THOTH_SaveAsFile] = THOTH_CTRL_KEY|THOTH_SHIFT_KEY|'s';
 	cfg->keybinds[THOTH_SaveFile] = THOTH_CTRL_KEY|'s';
-	cfg->keybinds[THOTH_ToggleComment] = THOTH_CTRL_KEY|'/';
+	cfg->keybinds[THOTH_Comment] = THOTH_CTRL_KEY|'/';
 	cfg->keybinds[THOTH_ToggleCommentMulti] = THOTH_CTRL_KEY|THOTH_SHIFT_KEY|'/';
 	cfg->keybinds[THOTH_MoveBrackets] = THOTH_CTRL_KEY|'m';
 	cfg->keybinds[THOTH_SelectBrackets] = THOTH_CTRL_KEY|THOTH_SHIFT_KEY|'j';

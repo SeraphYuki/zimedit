@@ -11,12 +11,11 @@
 
 #ifdef LINUX_COMPILE
 #include "x11.h"
+#endif
 #else
 #include "graphics.h"
 #endif
-#endif
 #include "file_browser.h"
-
 
 #define THOTH_CTRL_KEY    (unsigned int)0x100
 #define THOTH_ALT_KEY     (unsigned int)0x200
@@ -72,7 +71,7 @@
  typedef struct Thoth_EditorCur Thoth_EditorCur;
 
  struct Thoth_EditorCmd {
-
+	char name[64];
 	unsigned int keyBinding[8];
 	char *keys;
 	int num;
@@ -136,7 +135,7 @@ typedef struct {
 	Thoth_EditorFile          *file;
 	Thoth_FileBrowser       fileBrowser;
 	Thoth_EditorCmd         **lastCmd;  
-
+	FILE					*logFile;
 	int                     linesY;
 	int                     colsX;
 	int                     nCommands;
@@ -175,9 +174,8 @@ typedef struct {
 void Thoth_Editor_LoadFile(Thoth_Editor *t, char *path);
 #ifdef SDL_COMPILE
 void Thoth_Editor_Draw(Thoth_Editor *t, Thoth_Graphics *hdcMem);
-#endif
+#else
 
-#ifndef SDL_COMPILE
 #ifdef WINDOWS_COMPILE
 void Thoth_Editor_Draw(Thoth_Editor *t,HWND hwnd);
 #elif LINUX_COMPILE
