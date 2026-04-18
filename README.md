@@ -4,10 +4,10 @@ https://rotatedev.itch.io/zim BINARIES<br>
 New <b>colorscheme</b> is: https://github.com/morhetz/gruvbox<br>
 <b>font</b>: https://github.com/larsenwork/monoid<br>
 ![Screenshot](Screenshots/Screenshot.png)
-<br><hr>
-	 <p><img src="Screenshots/movelines.gif" width="50%">  <img src="Screenshots/navigation.gif" width="50%"><br></p>
-	 <p><img src="Screenshots/undo.gif" width="50%"> <img src="Screenshots/autocomplete.gif" width="50%"><br></p>
-	 <p><img src="Screenshots/selections.gif" width="50%"><br></p>
+<br>
+	 <div style="display:inline-block"><img src="Screenshots/movelines.gif" width="40%">  <img src="Screenshots/navigation.gif" width="40%"></div>
+	 <div style="display:inline-block"><img src="Screenshots/undo.gif" width="40%"> <img src="Screenshots/autocomplete.gif" width="40%"><br></div>
+	 <div style="display:inline-block"><img src="Screenshots/selections.gif" width="40%"></div>
 	 
 	 
 	 
