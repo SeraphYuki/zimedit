@@ -169,9 +169,11 @@ void Event(Thoth_t *t){
 
 
 #ifndef LIBRARY_COMPILE
-	} else if(ev.type == SDL_WINDOWEVENT_RESIZED || ev.type == SDL_WINDOWEVENT_SIZE_CHANGED){
+	} else if(ev.type == SDL_WINDOWEVENT){
 		Thoth_Graphics_ViewportXY(&t->graphics, 0, 0);
-		Thoth_Graphics_Resize(&t->graphics, ev.window.data1, ev.window.data2);
+		int width, height;
+		SDL_GetWindowSize(Window_GetWindow(),&width, &height);
+		Thoth_Graphics_Resize(&t->graphics, width, height);
 		Thoth_Graphics_Clear(&t->graphics);
 		Thoth_Editor_Draw(&t->te, &t->graphics);        
 		Thoth_Graphics_Render(&t->graphics);
