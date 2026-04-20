@@ -2337,9 +2337,8 @@ static void Cut(Thoth_Editor *t, Thoth_EditorCmd *c){
 
 	LoadCursors(t,c);
 	if(t->file->text == NULL) return;
-	RemoveExtraCursors(t);
 	
-	if(t->cursors[0].selection.len == 0){
+	if(t->nCursors == 1 && t->cursors[0].selection.len == 0){
 		t->file->textLen = strlen(t->file->text);
 
 		int f;
@@ -2366,11 +2365,12 @@ static void Cut(Thoth_Editor *t, Thoth_EditorCmd *c){
 
 		}
 	}
-	
 	X11Copy(t);
 	
-	int k = 0;
-	EraseAllSelectedText(t,&k,c);
+	int k;
+	for(k = 0; k < t->nCursors; k++)
+		EraseAllSelectedText(t,&k,c);
+
 	SaveCursors(t,c);
 }
 
@@ -2382,7 +2382,7 @@ static void UndoCut(Thoth_Editor *t, Thoth_EditorCmd *c){
 
 	int k;
 	for(k = t->nCursors-1; k >= 0; k--){
-		int pos = t->cursors[0].pos;
+		int pos = t->cursors[k].pos;
 		
 		if(k < c->nSavedCursors && t->cursors[k].savedText){
 			AddStrToText(t, &k, t->cursors[k].savedText);
