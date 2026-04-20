@@ -141,6 +141,7 @@ static void ExpandSelectionLines(Thoth_Editor *t, Thoth_EditorCmd *c);
 static void DeleteLine(Thoth_Editor *t, Thoth_EditorCmd *c);
 static void UndoDeleteLine(Thoth_Editor *t, Thoth_EditorCmd *c);
 static void Cut(Thoth_Editor *t, Thoth_EditorCmd *c);
+static void UndoCut(Thoth_Editor *t, Thoth_EditorCmd *c);
 static void Redo(Thoth_Editor *t, Thoth_EditorCmd *c);
 static void FreeCommand(Thoth_EditorCmd *c);
 static void UpdateScrollCenter(Thoth_Editor *t);
@@ -2262,9 +2263,7 @@ static void DeleteLine(Thoth_Editor *t, Thoth_EditorCmd *c){
 	SaveCursors(t,c);
 }
 
-static void Copy(Thoth_Editor *t, Thoth_EditorCmd *c){
-
-	UNUSED(c);
+static void X11Copy(Thoth_Editor *t){
 
 	if(t->file->text == NULL) return;
 
@@ -2326,25 +2325,73 @@ static void Copy(Thoth_Editor *t, Thoth_EditorCmd *c){
 #endif 
 
 	}
+
+}
+
+static void Copy(Thoth_Editor *t, Thoth_EditorCmd *c){
+	UNUSED(c);
+	X11Copy(t);
 }
 
 static void Cut(Thoth_Editor *t, Thoth_EditorCmd *c){
 
-	UNUSED(c);
+	LoadCursors(t,c);
+	if(t->file->text == NULL) return;
+	RemoveExtraCursors(t);
+	
 	if(t->cursors[0].selection.len == 0){
-		Thoth_EditorCmd *command = CreateCommand("ExpandSelectionLines",(const unsigned int[]){0}, 
-		0, 1, SCR_CENT, ExpandSelectionLines, NULL);
-		ExecuteCommand(t, command);
-		FreeCommand(command);
+		t->file->textLen = strlen(t->file->text);
+
+		int f;
+		for(f = 0; f < t->nCursors; f++){
+
+			Thoth_EditorCur *cursor = &t->cursors[f];
+			if(cursor->selection.len == 0){
+				cursor->selection.startCursorPos = 
+				cursor->pos - GetCharsIntoLine(t->file->text, cursor->pos);
+				if(cursor->pos == cursor->selection.startCursorPos) cursor->pos++;
+			} else {
+				cursor->pos++;
+			}
+
+			if(c->num < 0)
+				cursor->pos = GetStartOfPrevLine(t->file->text, cursor->pos);
+			else
+				cursor->pos = GetStartOfNextLine(t->file->text, t->file->textLen, cursor->pos);
+
+			if(cursor->pos < 0) cursor->pos = 0;
+			if(cursor->pos > (int)t->file->textLen) cursor->pos = t->file->textLen;
+
+			cursor->selection.len = cursor->pos - cursor->selection.startCursorPos;
+
+		}
 	}
+	
+	X11Copy(t);
+	
+	int k = 0;
+	EraseAllSelectedText(t,&k,c);
+	SaveCursors(t,c);
+}
 
-	Thoth_EditorCmd *command = CreateCommand("Copy",(const unsigned int[]){0}, 0, 1, SCR_CENT, Copy, NULL);
-	ExecuteCommand(t, command);
-	FreeCommand(command);
+static void UndoCut(Thoth_Editor *t, Thoth_EditorCmd *c){
 
-	command = CreateCommand("RemoveCharacters",(const unsigned int[]){0}, 0, 0, SCR_CENT, RemoveCharacters, UndoRemoveCharacters);
-	ExecuteCommand(t, command);
-	FreeCommand(command);
+	if(t->logging) return;
+
+	LoadCursors(t, c);
+
+	int k;
+	for(k = t->nCursors-1; k >= 0; k--){
+		int pos = t->cursors[0].pos;
+		
+		if(k < c->nSavedCursors && t->cursors[k].savedText){
+			AddStrToText(t, &k, t->cursors[k].savedText);
+		}
+		t->cursors[k].selection.startCursorPos = pos;
+		t->cursors[k].selection.len =t->cursors[k].pos -  pos;				
+		t->cursors[k].pos = pos;
+	}
+	SaveCursors(t,c);
 }
 
 static void AddSavedText(Thoth_Editor *t, char *str, int len, int *cursorIndex){
@@ -3532,7 +3579,7 @@ void Thoth_Editor_Init(Thoth_Editor *t,Thoth_Config *cfg){
 
 	AddCommand(t, CreateCommand("Undo",(unsigned int[]){t->cfg->keybinds[THOTH_Undo] , 0}, "", 1, SCR_CENT, Undo, NULL));
 	AddCommand(t, CreateCommand("Redo",(unsigned int[]){t->cfg->keybinds[THOTH_Redo]  , 0}, "", 1, SCR_CENT, Redo, NULL));
-	AddCommand(t, CreateCommand("Cut",(unsigned int[]){t->cfg->keybinds[THOTH_Cut]  , 0}, "", 1, SCR_CENT, Cut, NULL));
+	AddCommand(t, CreateCommand("Cut",(unsigned int[]){t->cfg->keybinds[THOTH_Cut]  , 0}, "", 1, SCR_CENT, Cut, UndoCut));
 	AddCommand(t, CreateCommand("Copy",(unsigned int[]){t->cfg->keybinds[THOTH_Copy]  , 0}, "", 1, SCR_CENT, Copy, NULL));
 	AddCommand(t, CreateCommand("Paste",(unsigned int[]){t->cfg->keybinds[THOTH_Paste] , 0}, "", 1, SCR_CENT, Paste, UndoPaste));
 
@@ -4694,7 +4741,7 @@ int Thoth_Editor_Destroy(Thoth_Editor *t){
 	// 	if(len > 0){
 	// 		fwrite(&len,sizeof(int),1,fp);
 	// 		// fwrite(t->fileBrowser.directory,1,len,fp);
-	// 		fwrite(t->file->path,1,len,fp);
+;
 	// 	}
 	// 	fclose(fp);
 	// }
