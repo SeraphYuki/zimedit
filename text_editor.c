@@ -452,6 +452,8 @@ static void NewLinesElastic(Thoth_Editor *t){
 		buffer[k] = 0;
 		command = CreateCommand("AddCharacters",(const unsigned int[]){0}, buffer, 0, 
 			SCR_CENT, AddCharacters, UndoAddCharacters);
+
+
 	} else {
 		command = CreateCommand("AddCharacters",(const unsigned int[]){0}, "\n", 0, 
 			SCR_CENT, AddCharacters, UndoAddCharacters);
@@ -1552,7 +1554,9 @@ static void Paste(Thoth_Editor *t, Thoth_EditorCmd *c){
 	X11_Paste(&t->clipboard);
 #endif
 #endif
+	
 	char *clipboard = t->clipboard;
+
 	if(c->keys && strlen(c->keys)){
 		clipboard = c->keys;
 	} else {
@@ -1561,7 +1565,6 @@ static void Paste(Thoth_Editor *t, Thoth_EditorCmd *c){
 		strcpy(c->keys,clipboard);
 		c->keys[strlen(clipboard)] = 0;
 	}
-
 	int clipboardLen = strlen(clipboard);
 
 	int k;
@@ -1571,6 +1574,36 @@ static void Paste(Thoth_Editor *t, Thoth_EditorCmd *c){
 		if(clipboard[k] == '\n') lines++;
 	}
 	lines--;
+
+	// if cursorpos is the same as number of tabs dont paste them
+	if(lines == 1){
+
+		int charsInto = GetCharsIntoLine(t->file->text, t->cursors[0].pos);
+		int tabs = 0;
+		for(k = t->cursors[0].pos - charsInto; k < t->cursors[0].pos; k++){
+			if(t->file->text[k] != '\t') break;
+			tabs++;
+		}
+		if(tabs == charsInto){
+			for(k = 0; k < tabs; k++){
+				if(clipboard[k] != '\t') break;
+			}
+			if(k == tabs){
+				char *tmp = malloc((clipboardLen - tabs)+1);
+				memcpy(tmp, &clipboard[tabs], clipboardLen-tabs);
+				free(clipboard);
+				clipboard = tmp;
+				clipboardLen -= tabs;
+				clipboard[clipboardLen] = 0;
+				if(c->keys) free(c->keys);
+				c->keys = malloc(strlen(clipboard)+1);
+				strcpy(c->keys,clipboard);
+				c->keys[strlen(clipboard)] = 0;
+				t->clipboard = clipboard;
+			}
+		}
+	}
+
 
 	if(lines == t->nCursors){
 		
