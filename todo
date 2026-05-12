@@ -4,11 +4,6 @@ offscreen multiline comments broken
 sorted by importance:
 
 
-
-bug: ctrl+d wraparound never stops(fixed i think)
-
-windows compile & compile into curr directory
-
 comments for other languages // not only
 filebroser max hardcoded 100, so allocation of too many files breaks it.
 
@@ -17,10 +12,7 @@ scrollbar.
 32 bit version bug
 tab autocomplete directives
 
-libthoth
-keybindings config
 highlighting for more languages than C, and general lua (function is a keyword)
-} auto indent down
 code folding
 check for file change outside editor and reload on window focus event
 find/replace

@@ -89,7 +89,7 @@ static void Compile(Thoth_Graphics *graphics, Thoth_Shader *shader, const char *
 	shader->uniColorLoc = glGetUniformLocation(shader->program, "uniformColor");
 	shader->invViewportLoc = glGetUniformLocation(shader->program, "invViewport");
 	shader->ncursesColorsLoc = glGetUniformLocation(shader->program, "colors");
-	glUniform3fv(shader->ncursesColorsLoc, THOTH_NUM_COLORS, (float *)&graphics->cfg->colors[0].r);
+	glUniform4fv(shader->ncursesColorsLoc, THOTH_NUM_COLORS, (float *)&graphics->cfg->colors[0].r);
 	glUniform2f(shader->invViewportLoc,1.0f/graphics->viewport.w, 1.0f/graphics->viewport.h);
 }
 
@@ -131,11 +131,10 @@ void main(){
 static const char *FSNCursesBG_Source = "#version 120\n"
 STR(
 varying float ColorOutBG;
-uniform vec3 colors[16];
+uniform vec4 colors[16];
 
 void main(){
-
-	gl_FragColor = vec4(colors[int(ColorOutBG)],1);
+	gl_FragColor = colors[int(ColorOutBG)];
 }
 );
 static const char *VSNCurses_Source = "#version 120\n"
@@ -149,7 +148,6 @@ varying float ColorOutFG;
 varying float ColorOutBG;
 uniform vec2 invViewport;
 )
-
 
 STR(
 
@@ -168,16 +166,18 @@ varying vec2 TexCoord;
 varying float ColorOutFG;
 varying float ColorOutBG;
 uniform sampler2D tex;
-uniform vec3 colors[16];
+uniform vec4 colors[16];
 
 void main(){
 
 	vec4 color = texture2D(tex, TexCoord);
 
 	if(color.r > 0.4)
-		color = vec4(colors[int(ColorOutFG)],1);
+		color = colors[int(ColorOutFG)];
+	else if(ColorOutBG >= 6)  // white/bg
+		discard;
 	else
-		color = vec4(mix(colors[int(ColorOutBG)], colors[int(ColorOutFG)], color.r),1);
+		color = mix(colors[int(ColorOutBG)], colors[int(ColorOutFG)], color.r);
 
 	gl_FragColor = color;
 }
@@ -194,7 +194,7 @@ void main(){
 	vec4 color = texture2D(tex, TexCoord);
 	if(color.a < 0.5) discard;
 
-	gl_FragColor = color * vec4(uniformColor.rgb*uniformColor.a, 1);
+	gl_FragColor = color * vec4(uniformColor.rgb*uniformColor.a, color.a);
 }
 );
 
@@ -208,7 +208,7 @@ STR(
 
 void main(){
 	TexCoord = pos;
-	vec2 screenSpace = vec2((pos.x * 2) - 1,((1-pos.y) * 2) - 1);
+	vec2 screenSpace = vec2((pos.x * 2) - 1,((pos.y) * 2) - 1);
 	gl_Position = vec4(screenSpace.x, screenSpace.y, -1, 1);
 }
 );
@@ -250,13 +250,15 @@ void main(){
 );
 
 static void CreateFrameBuffer(Thoth_Graphics *graphics){
-
+	glEnable(GL_BLEND);
+	
 	glGenFramebuffers(1,&graphics->fb_g);
 	glBindFramebuffer(GL_FRAMEBUFFER, graphics->fb_g);
 
 	glGenTextures(1, &graphics->fbTexture_g);
 	glBindTexture(GL_TEXTURE_2D, graphics->fbTexture_g);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, graphics->viewport.w, graphics->viewport.h, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, graphics->viewport.w, graphics->viewport.h, 0, 
+	GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -273,9 +275,9 @@ static void CreateFrameBuffer(Thoth_Graphics *graphics){
 	}
 
 	glViewport(0, 0, graphics->viewport.w, graphics->viewport.h);
-
-	glClearColor(graphics->cfg->colors[THOTH_COLOR_BG].r,graphics->cfg->colors[THOTH_COLOR_BG].g,graphics->cfg->colors[THOTH_COLOR_BG].b,1);
-	glClearColor(1,1,1,1);
+	
+	glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+	glClearColor(0,0,0,0);
 	glClear(GL_COLOR_BUFFER_BIT);
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -437,7 +439,7 @@ void Thoth_Graphics_ViewportXY(Thoth_Graphics *graphics, int x, int y){
 
 void Thoth_Graphics_Resize(Thoth_Graphics *graphics, int w, int h){
 	glBindTexture(GL_TEXTURE_2D, graphics->fbTexture_g);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, w, h, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 	graphics->viewport.w = w;
 	graphics->viewport.h = h;
 }
@@ -470,7 +472,8 @@ void Thoth_Graphics_Render(Thoth_Graphics *graphics){
 void Thoth_Graphics_Clear(Thoth_Graphics *graphics){
 	glBindFramebuffer(GL_FRAMEBUFFER, graphics->fb_g);
 	glViewport(graphics->viewport.x, graphics->viewport.y, graphics->viewport.w, graphics->viewport.h);
-	glClearColor(graphics->cfg->colors[THOTH_COLOR_BG].r,graphics->cfg->colors[THOTH_COLOR_BG].g,graphics->cfg->colors[THOTH_COLOR_BG].b,1);
+	Thoth_RGBColor rgb = graphics->cfg->colors[THOTH_COLOR_BG];
+	glClearColor(rgb.r,rgb.g,rgb.b,rgb.a);
 	glClear(GL_COLOR_BUFFER_BIT);
 	glCullFace(GL_BACK);
 }
@@ -641,10 +644,15 @@ void Thoth_Graphics_mvprintw(Thoth_Graphics *graphics, float x, float y, char *s
 }
 
 void Thoth_Graphics_RenderNCurses(Thoth_Graphics *graphics){
+	
 
 	glUseProgram(graphics->shaders[THOTH_NCURSES_BG_SHADER].program);
-	glUniform2f(graphics->shaders[THOTH_NCURSES_BG_SHADER].invViewportLoc, 1.0f/graphics->viewport.w, 1.0f/graphics->viewport.h); 
-
+	glUniform2f(graphics->shaders[THOTH_NCURSES_BG_SHADER].invViewportLoc, 
+	1.0f/graphics->viewport.w, 1.0f/graphics->viewport.h); 
+	
+	glUniform4fv(graphics->shaders[THOTH_NCURSES_BG_SHADER].ncursesColorsLoc,
+	THOTH_NUM_COLORS, (float *)&graphics->cfg->colors[0].r);
+	
 	glBindVertexArray(graphics->ncursesBgVao_g);
 	glCullFace(GL_FRONT);
 	glBindBuffer(GL_ARRAY_BUFFER, graphics->ncursesBgPosVbo_g);
@@ -658,6 +666,8 @@ void Thoth_Graphics_RenderNCurses(Thoth_Graphics *graphics){
 
 	glUseProgram(graphics->shaders[THOTH_NCURSES_SHADER].program);
 	glUniform2f(graphics->shaders[THOTH_NCURSES_SHADER].invViewportLoc, 1.0f/graphics->viewport.w, 1.0f/graphics->viewport.h); 
+	glUniform4fv(graphics->shaders[THOTH_NCURSES_SHADER].ncursesColorsLoc,
+	THOTH_NUM_COLORS, (float *)&graphics->cfg->colors[0].r);
 
 
 	glActiveTexture(GL_TEXTURE0);
@@ -681,7 +691,16 @@ void Thoth_Graphics_RenderNCurses(Thoth_Graphics *graphics){
 	glDrawArrays(GL_TRIANGLES, 0, graphics->stringOffset);
 
 	graphics->stringOffset = 0;
-
+}
+void Thoth_Graphics_BeginDraw(Thoth_Graphics *g){
+#ifdef LIBRARY_COMPILE
+	glBindFramebuffer(GL_FRAMEBUFFER, g->fb_g);
+#endif
+}
+void Thoth_Graphics_EndDraw(Thoth_Graphics *g){
+#ifdef LIBRARY_COMPILE
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+#endif
 }
 
 void Thoth_Graphics_attron(Thoth_Graphics *graphics, u32 attr){

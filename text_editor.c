@@ -2353,7 +2353,7 @@ static void X11Copy(Thoth_Editor *t){
 		t->clipboard=buffer;
 #ifdef SDL_COMPILE
 		SDL_SetClipboardText(t->clipboard);
-#elif LINUX_COMPILE
+#else
 		X11_Copy(&t->clipboard);
 #endif 
 
@@ -3931,6 +3931,8 @@ void Thoth_Editor_Draw(Thoth_Editor *t){
 
 #endif
 
+	Thoth_Graphics_BeginDraw(t->graphics);
+	
 	t->logY = 0;
 	t->logX = 5;
 	if(t->logging) t->logY = 1;
@@ -4501,6 +4503,8 @@ void Thoth_Editor_Draw(Thoth_Editor *t){
 	wrefresh(stdscr);
 #endif
 #endif
+
+	Thoth_Graphics_EndDraw(t->graphics);
 }
 
 void Thoth_Editor_Event(Thoth_Editor *t, unsigned int key){

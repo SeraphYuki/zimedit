@@ -1,0 +1,20 @@
+### wish i knew make, uncomment for library compile comment everything else
+CC=gcc
+EXECUTABLE=libthoth.a
+CFLAGS = -g -Wall -lm  -DSDL2_COMPILE -DSDL_COMPILE -DLIBRARY_COMPILE -DLINUX_COMPILE\
+$(shell pkg-config --cflags sdl2) $(shell pkg-config --cflags freetype2)
+
+SOURCES=main.c text_editor.c window.c graphics.c log.c freetype.c file_browser.c config.c json.c
+OBJECTS=$(SOURCES:.c=.o)
+
+
+all: $(SOURCES) $(EXECUTABLE)
+
+$(EXECUTABLE): $(OBJECTS) 
+	ar -rc $@ $(OBJECTS)
+
+.c.o:
+	$(CC) -c $(CFLAGS) $< -o $@
+
+clean:
+	rm *.o

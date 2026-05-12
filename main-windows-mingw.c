@@ -238,6 +238,14 @@ int Thoth_Event(Thoth_t *t, SDL_Event ev){
 	}
 	return 0;
 }
+void Thoth_RenderIntoTexture(Thoth_t *t, int *tex, int *w, int *h){
+	Thoth_Graphics_Clear(&t->graphics);
+	Thoth_Editor_Draw(&t->te,&t->graphics);        
+	*tex = t->graphics.fbTexture_g;
+	*w = t->graphics.viewport.w;
+	*h = t->graphics.viewport.h;
+}
+
 void Thoth_Render(Thoth_t *t){
 	Thoth_Graphics_Clear(&t->graphics);
 	Thoth_Editor_Draw(&t->te,&t->graphics);        

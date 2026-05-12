@@ -234,7 +234,22 @@ int Thoth_Event(Thoth_t *t, SDL_Event ev){
 void Thoth_Render(Thoth_t *t){
 	Thoth_Graphics_Clear(&t->graphics);
 	Thoth_Editor_Draw(&t->te,&t->graphics);        
-	Thoth_Graphics_Render(&t->graphics);
+}
+
+void Thoth_SetColorCfg(Thoth_t *t, int index, float r,float g,float b, float a){
+	Thoth_RGBColor *rgb = &t->graphics.cfg->colors[index];
+	rgb->r = r;
+	rgb->g = g;
+	rgb->b = b;
+	rgb->a = a;
+}
+
+void Thoth_RenderIntoTexture(Thoth_t *t, int *tex, int *w, int *h){
+	Thoth_Graphics_Clear(&t->graphics);
+	Thoth_Editor_Draw(&t->te,&t->graphics);        
+	*tex = t->graphics.fbTexture_g;
+	*w = t->graphics.viewport.w;
+	*h = t->graphics.viewport.h;
 }
 
 void Thoth_LoadFile(Thoth_t *t, char *path){

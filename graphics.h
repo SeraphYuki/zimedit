@@ -87,6 +87,8 @@ u32 Thoth_Graphics_TextCollumns(Thoth_Graphics *g);
 u32 Thoth_Graphics_TextRows(Thoth_Graphics *g);
 u32 Thoth_Graphics_FontWidth(Thoth_Graphics *g);
 u32 Thoth_Graphics_FontHeight(Thoth_Graphics *g);
+void Thoth_Graphics_BeginDraw(Thoth_Graphics *g);
+void Thoth_Graphics_EndDraw(Thoth_Graphics *g);
 void Thoth_Graphics_mvprintw(Thoth_Graphics *g, float x, float y, char *str, int strLen);
 void Thoth_Graphics_attron(Thoth_Graphics *g, u32 attr);
 void Thoth_Graphics_init_pair(Thoth_Graphics *g, u8 pair, u8 fg, u8 bg);

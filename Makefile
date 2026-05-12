@@ -32,17 +32,17 @@ SDLLIBS = $(shell pkg-config --libs sdl3)
 LDLIBS = -lm -lutil  $(GLEWLIBS) $(SDLLIBS) $(FREETYPELIBS)
 
 # use main-windows-mingw.c
-#CC=x86_64-w64-mingw32-gcc
-#EXECUTABLE=zim.exe
-#
-#CFLAGS = -g -Wall -lm -DWINDOWS_COMPILE -DSDL2_COMPILE -DSDL_COMPILE  \
-#$(shell x86_64-w64-mingw32-sdl2-config --cflags) \
-#-I/usr/x86_64-w64-mingw32/include/freetype2
-#
-#FREETYPELIBS = -lfreetype
-#GLEWLIBS = -lglew32 -lopengl32 -mwindows -Lglu32
-#SDLLIBS = $(shell x86_64-w64-mingw32-sdl2-config --libs)
-#LDLIBS = -lm -lmingw32   $(GLEWLIBS) $(SDLLIBS) $(FREETYPELIBS) 
+CC=x86_64-w64-mingw32-gcc
+EXECUTABLE=zim.exe
+
+CFLAGS = -g -Wall -lm -DWINDOWS_COMPILE -DSDL2_COMPILE -DSDL_COMPILE  \
+$(shell x86_64-w64-mingw32-sdl2-config --cflags) \
+-I/usr/x86_64-w64-mingw32/include/freetype2
+
+FREETYPELIBS = -lfreetype
+GLEWLIBS = -lglew32 -lopengl32 -mwindows -Lglu32
+SDLLIBS = $(shell x86_64-w64-mingw32-sdl2-config --libs)
+LDLIBS = -lm -lmingw32   $(GLEWLIBS) $(SDLLIBS) $(FREETYPELIBS)
 
 # add -pg for gdb
 
@@ -70,7 +70,7 @@ $(EXECUTABLE): $(OBJECTS)
 	$(CC) $(OBJECTS) $(LDLIBS) -o $@
 
 #all: createResourcesO $(SOURCES) $(EXECUTABLE)
-
+#
 #$(EXECUTABLE): $(OBJECTS) icon.o
 #	$(CC) $(OBJECTS) icon.o $(LDLIBS) -o $@
 #
@@ -80,6 +80,6 @@ $(EXECUTABLE): $(OBJECTS)
 #
 .c.o:
 	$(CC) -c $(CFLAGS) $< -o $@
-
+#
 clean:
 	rm -rf *.o

@@ -29,6 +29,9 @@ Thoth_t *Thoth_Create(int w, int h);
 void Thoth_Render(Thoth_t *t);
 void Thoth_Resize(Thoth_t *t, int x, int y, int w, int h);
 #ifdef LIBRARY_COMPILE
+void Thoth_SetColorCfg(Thoth_t *t, int index, float r,float g,float b, float a);
+void Thoth_RenderIntoTexture(Thoth_t *t, int *tex, int *w, int *h);
+
 #define THOTH_CONFIG_FILE "zimconfig.cfg"
 #define THOTH_LOGFILE "zimproject.zim"
 #define THOTH_LOGCOMPILEFILE "zimlog.txt"

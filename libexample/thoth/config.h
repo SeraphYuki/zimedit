@@ -16,7 +16,7 @@ enum {
 	THOTH_SwitchFile,
 	THOTH_SaveAsFile,
 	THOTH_SaveFile,
-	THOTH_ToggleComment,
+	THOTH_Comment,
 	THOTH_ToggleCommentMulti,
 	THOTH_MoveBrackets,
 	THOTH_SelectBrackets,
@@ -59,10 +59,10 @@ enum {
 	THOTH_COLOR_BLUE,
 	THOTH_COLOR_GREEN,
 	THOTH_COLOR_MAGENTA,
-	THOTH_COLOR_WHITE,
+	THOTH_COLOR_WHITE=  6,
 	THOTH_COLOR_BLACK,
 	THOTH_COLOR_GREY,
-	THOTH_COLOR_BG,
+	THOTH_COLOR_BG = 9,
 	THOTH_NUM_COLORS,
 };
 enum {
@@ -98,6 +98,7 @@ typedef struct {
 	float r;
 	float g;
 	float b;
+	float a;
 } Thoth_RGBColor;
 
 typedef struct {

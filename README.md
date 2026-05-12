@@ -14,9 +14,6 @@ New <b>colorscheme</b> is: https://github.com/morhetz/gruvbox<br>
 ![Screenshot](Screenshots/Screenshot.gif)<br>
 ![Screenshot](Screenshots/lib.gif)<br><br>
 <b>TODO</b>:<br>
-bug selectnextword, resolvecursorcollision makes the selection double for matched right after.
-
-copy/paste bugs<br>
 convert spaces to tabs, macro. <br>
 Have only the active file in memory AND swap files<br>
 minimap<br>
