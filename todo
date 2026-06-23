@@ -1,4 +1,5 @@
-copy for each cursor
+.tmp save files in the close function so i can open where was left off.
+
 offscreen multiline comments broken
 
 sorted by importance:
