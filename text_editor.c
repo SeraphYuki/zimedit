@@ -1560,6 +1560,8 @@ static void Paste(Thoth_Editor *t, Thoth_EditorCmd *c){
 	if(c->keys && strlen(c->keys)){
 		clipboard = c->keys;
 	} else {
+		if(!clipboard) return;
+		
 		if(c->keys) free(c->keys);
 		c->keys = malloc(strlen(clipboard)+1);
 		strcpy(c->keys,clipboard);
@@ -2353,7 +2355,7 @@ static void X11Copy(Thoth_Editor *t){
 		t->clipboard=buffer;
 #ifdef SDL_COMPILE
 		SDL_SetClipboardText(t->clipboard);
-#else
+#elif LINUX_COMPILE
 		X11_Copy(&t->clipboard);
 #endif 
 
@@ -2416,7 +2418,7 @@ static void UndoCut(Thoth_Editor *t, Thoth_EditorCmd *c){
 	int k;
 	for(k = t->nCursors-1; k >= 0; k--){
 		int pos = t->cursors[k].pos;
-		
+		t->cursors[k].pos = t->cursors[k].selection.startCursorPos;		
 		if(k < c->nSavedCursors && t->cursors[k].savedText){
 			AddStrToText(t, &k, t->cursors[k].savedText);
 		}
@@ -3048,6 +3050,7 @@ static void Redo(Thoth_Editor *t, Thoth_EditorCmd *c){
 }
 
 static void FreeCommand(Thoth_EditorCmd *c){
+	if(!c) return;
 
 	if(c->keys) free(c->keys);
 
@@ -3931,8 +3934,6 @@ void Thoth_Editor_Draw(Thoth_Editor *t){
 
 #endif
 
-	Thoth_Graphics_BeginDraw(t->graphics);
-	
 	t->logY = 0;
 	t->logX = 5;
 	if(t->logging) t->logY = 1;
@@ -4503,8 +4504,6 @@ void Thoth_Editor_Draw(Thoth_Editor *t){
 	wrefresh(stdscr);
 #endif
 #endif
-
-	Thoth_Graphics_EndDraw(t->graphics);
 }
 
 void Thoth_Editor_Event(Thoth_Editor *t, unsigned int key){
