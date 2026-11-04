@@ -310,7 +310,7 @@ void Thoth_Config_Read(Thoth_Config *cfg){
 	ConfigRead(top, cfg);	
 
 	
-			free(memory);
-		free(stack);
+	free(memory);
+	free(stack);
 
 }

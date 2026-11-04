@@ -60,20 +60,20 @@ SOURCES=main.c \
 
 OBJECTS=$(SOURCES:.c=.o)
 
-all: $(SOURCES) $(EXECUTABLE)
+#all: $(SOURCES) $(EXECUTABLE)
+#
+#$(EXECUTABLE): $(OBJECTS)
+#	$(CC) $(OBJECTS) $(LDLIBS) -o $@
 
-$(EXECUTABLE): $(OBJECTS)
-	$(CC) $(OBJECTS) $(LDLIBS) -o $@
+all: createResourcesO $(SOURCES) $(EXECUTABLE)
 
-#all: createResourcesO $(SOURCES) $(EXECUTABLE)
-#
-#$(EXECUTABLE): $(OBJECTS) icon.o
-#	$(CC) $(OBJECTS) icon.o $(LDLIBS) -o $@
-#
-#
-#createResourcesO: icon.rc
-#	x86_64-w64-mingw32-windres icon.rc -o icon.o
-#
+$(EXECUTABLE): $(OBJECTS) icon.o
+	$(CC) $(OBJECTS) icon.o $(LDLIBS) -o $@
+
+
+createResourcesO: icon.rc
+	windres icon.rc -o icon.o
+
 
 .c.o:
 	$(CC) -c $(CFLAGS) $< -o $@

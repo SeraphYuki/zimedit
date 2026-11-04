@@ -46,6 +46,7 @@
 #ifdef WINDOWS_API_COMPILE
 void clear(){}
 #endif
+
 enum {
 	SCR_NORM = 0,
 	SCR_CENT,
@@ -1546,8 +1547,25 @@ static void Paste(Thoth_Editor *t, Thoth_EditorCmd *c){
 #ifdef SDL_COMPILE
 	if(t->clipboard) free(t->clipboard);
 	char *temp = SDL_GetClipboardText();
-	t->clipboard = malloc(strlen(temp)+1);
-	strcpy(t->clipboard, temp);
+	int len = strlen(temp);
+
+	int m, j;
+	// remove '\r'
+	for(j = 0; j < len-1; j++){
+		if(temp[j] == '\r' ){
+			for( m = j; m < len-1; m++){
+				temp[m] = temp[m+1]; 
+			}
+			j--; 
+			len--;
+		}
+	}
+
+	t->clipboard = malloc(len+1);
+	memcpy(t->clipboard, temp, len);
+	t->clipboard[len] = 0;
+
+
 	SDL_free(temp);
 #else
 #ifdef LINUX_COMPILE
@@ -1561,7 +1579,6 @@ static void Paste(Thoth_Editor *t, Thoth_EditorCmd *c){
 		clipboard = c->keys;
 	} else {
 		if(!clipboard) return;
-		
 		if(c->keys) free(c->keys);
 		c->keys = malloc(strlen(clipboard)+1);
 		strcpy(c->keys,clipboard);
@@ -1577,8 +1594,8 @@ static void Paste(Thoth_Editor *t, Thoth_EditorCmd *c){
 	}
 	lines--;
 
-	// if cursorpos is the same as number of tabs dont paste them
-	if(lines == 1){
+	 //if cursorpos is the same as number of tabs dont paste them
+	if(lines <= 1){
 
 		int charsInto = GetCharsIntoLine(t->file->text, t->cursors[0].pos);
 		int tabs = 0;
@@ -1586,7 +1603,7 @@ static void Paste(Thoth_Editor *t, Thoth_EditorCmd *c){
 			if(t->file->text[k] != '\t') break;
 			tabs++;
 		}
-		if(tabs == charsInto){
+		if(tabs != 0 && tabs == charsInto){
 			for(k = 0; k < tabs; k++){
 				if(clipboard[k] != '\t') break;
 			}
@@ -1607,8 +1624,8 @@ static void Paste(Thoth_Editor *t, Thoth_EditorCmd *c){
 	}
 
 
-	if(lines == t->nCursors){
 		
+	if(lines == t->nCursors && lines > 1){
 		int curline = 0;
 		for(k = 0; k < t->nCursors; k++){
 				int start = curline;
@@ -1633,13 +1650,12 @@ static void Paste(Thoth_Editor *t, Thoth_EditorCmd *c){
 			char tmp = clipboard[clipboardLen-1];
 			if(clipboard[clipboardLen-1] == '\n'){
 				clipboard[clipboardLen-1] = 0;
-				clipboardLen--;
 			}
 			
 			EraseAllSelectedText(t, &k, c);
 			AddStrToText(t, &k, clipboard);
-			clipboard[clipboardLen] = tmp;
-			t->cursors[k].addedLen = clipboardLen;
+			t->cursors[k].addedLen = strlen(clipboard);
+			clipboard[clipboardLen-1] = tmp;
 		}
 	}
 
@@ -2335,7 +2351,7 @@ static void X11Copy(Thoth_Editor *t){
 			}
 			buffer = malloc(bufferLen+1);
 			buffer[bufferLen] = 0;
-			if(t->nCursors > 1) buffer[bufferLen - 1] = '\n';
+			if(k+1 < t->nCursors && bufferLen > 0) buffer[bufferLen - 1] = '\n';
 			memcpy(buffer, &t->file->text[start], end-start);
 		}
 
@@ -2353,6 +2369,7 @@ static void X11Copy(Thoth_Editor *t){
 		buffer[bufferLen-1] = '\n';
 		buffer[bufferLen] = 0;
 		t->clipboard=buffer;
+		
 #ifdef SDL_COMPILE
 		SDL_SetClipboardText(t->clipboard);
 #elif LINUX_COMPILE
@@ -3038,6 +3055,12 @@ static void ExpandAddCharacters(Thoth_Editor *t, Thoth_EditorCmd *c){
 
 
 }
+static void ZoomOut(Thoth_Editor *t, Thoth_EditorCmd *c){
+	Thoth_Graphics_Zoom(t->graphics, -1);
+}
+static void ZoomIn(Thoth_Editor *t, Thoth_EditorCmd *c){
+	Thoth_Graphics_Zoom(t->graphics, 1);
+}
 
 static void Undo(Thoth_Editor *t, Thoth_EditorCmd *c){
 
@@ -3618,7 +3641,8 @@ void Thoth_Editor_Init(Thoth_Editor *t,Thoth_Config *cfg){
 	AddCommand(t, CreateCommand("Cut",(unsigned int[]){t->cfg->keybinds[THOTH_Cut]  , 0}, "", 1, SCR_CENT, Cut, UndoCut));
 	AddCommand(t, CreateCommand("Copy",(unsigned int[]){t->cfg->keybinds[THOTH_Copy]  , 0}, "", 1, SCR_CENT, Copy, NULL));
 	AddCommand(t, CreateCommand("Paste",(unsigned int[]){t->cfg->keybinds[THOTH_Paste] , 0}, "", 1, SCR_CENT, Paste, UndoPaste));
-
+	AddCommand(t, CreateCommand("ZoomOut",(unsigned int[]){THOTH_CTRL_KEY|'1' , 0}, "", 1, SCR_CENT, ZoomOut, NULL));
+	AddCommand(t, CreateCommand("ZoomIn",(unsigned int[]){THOTH_CTRL_KEY|'2' , 0}, "", 1, SCR_CENT, ZoomIn, NULL));
 	InitCursors(t);
 	Thoth_FileBrowser_Init(&t->fileBrowser);
 
