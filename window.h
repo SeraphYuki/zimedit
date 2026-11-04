@@ -6,11 +6,11 @@
 #define WINDOW_INIT_WIDTH 			960
 #define WINDOW_INIT_HEIGHT 			540
 #ifndef SDL2_COMPILE
-#include <SDL3/SDL_events.h>
-#include <SDL3/SDL.h>
-#else
 #include <SDL2/SDL_events.h>
 #include <SDL2/SDL.h>
+#else
+#include <SDL3/SDL_events.h>
+#include <SDL3/SDL.h>
 #endif
 SDL_Window *Window_GetWindow();
 void Window_Close();

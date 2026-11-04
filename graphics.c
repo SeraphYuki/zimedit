@@ -32,7 +32,7 @@ typedef struct {
 #define COLORBG_ATTRIB "colorBG"
 #define FONT_SIZE_BITS 4
 #define FONT_SIZE_MASK ((1 << FONT_SIZE_BITS)-1)
-#define FONTSIZE 12
+#define FONTSIZE 16
 #define MAXTEXTHEIGHT 130
 #define MAXTEXTWIDTH 130
 #define RENDER_VRAM_SIZE THOTH_MAX_TEXT_CHARS*6// idk most text characters on screen possible
@@ -208,7 +208,7 @@ STR(
 
 void main(){
 	TexCoord = pos;
-	vec2 screenSpace = vec2((pos.x * 2) - 1,((pos.y) * 2) - 1);
+	vec2 screenSpace = vec2((pos.x * 2) - 1,((1-pos.y) * 2) - 1);
 	gl_Position = vec4(screenSpace.x, screenSpace.y, -1, 1);
 }
 );
@@ -458,7 +458,7 @@ void Thoth_Graphics_Render(Thoth_Graphics *graphics){
 
 	glBindVertexArray(graphics->quadVao_g);
 
-	glViewport(graphics->viewport.x, graphics->viewport.y, graphics->viewport.w, graphics->viewport.h);
+	glViewport(0, 0, graphics->viewport.w, graphics->viewport.h);
 
 	glUseProgram(graphics->shaders[THOTH_QUAD_SHADER].program);
 	glUniform2f(graphics->shaders[THOTH_QUAD_SHADER].invViewportLoc,1.0f, 1.0f);
@@ -471,11 +471,12 @@ void Thoth_Graphics_Render(Thoth_Graphics *graphics){
 
 void Thoth_Graphics_Clear(Thoth_Graphics *graphics){
 	glBindFramebuffer(GL_FRAMEBUFFER, graphics->fb_g);
-	glViewport(graphics->viewport.x, graphics->viewport.y, graphics->viewport.w, graphics->viewport.h);
+	glViewport(0, 0, graphics->viewport.w, graphics->viewport.h);
 	Thoth_RGBColor rgb = graphics->cfg->colors[THOTH_COLOR_BG];
 	glClearColor(rgb.r,rgb.g,rgb.b,rgb.a);
 	glClear(GL_COLOR_BUFFER_BIT);
 	glCullFace(GL_BACK);
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
 void Thoth_Graphics_RenderRect(Thoth_Graphics *graphics, float x, float y, u16 w, u16 h, u8 r, u8 g, u8 b, u8 a){
@@ -645,7 +646,7 @@ void Thoth_Graphics_mvprintw(Thoth_Graphics *graphics, float x, float y, char *s
 
 void Thoth_Graphics_RenderNCurses(Thoth_Graphics *graphics){
 	
-
+	glBindFramebuffer(GL_FRAMEBUFFER, graphics->fb_g);
 	glUseProgram(graphics->shaders[THOTH_NCURSES_BG_SHADER].program);
 	glUniform2f(graphics->shaders[THOTH_NCURSES_BG_SHADER].invViewportLoc, 
 	1.0f/graphics->viewport.w, 1.0f/graphics->viewport.h); 
@@ -689,18 +690,15 @@ void Thoth_Graphics_RenderNCurses(Thoth_Graphics *graphics){
 	glBufferData(GL_ARRAY_BUFFER, graphics->stringOffset, &graphics->ncursesbgs[0], GL_STATIC_DRAW);
 
 	glDrawArrays(GL_TRIANGLES, 0, graphics->stringOffset);
-
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	
 	graphics->stringOffset = 0;
 }
 void Thoth_Graphics_BeginDraw(Thoth_Graphics *g){
-#ifdef LIBRARY_COMPILE
-	glBindFramebuffer(GL_FRAMEBUFFER, g->fb_g);
-#endif
+	//glBindFramebuffer(GL_FRAMEBUFFER, g->fb_g);
 }
 void Thoth_Graphics_EndDraw(Thoth_Graphics *g){
-#ifdef LIBRARY_COMPILE
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-#endif
+	//glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
 void Thoth_Graphics_attron(Thoth_Graphics *graphics, u32 attr){

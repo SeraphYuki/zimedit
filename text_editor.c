@@ -3387,7 +3387,7 @@ void Thoth_Editor_LoadFile(Thoth_Editor *t, char *pathRel){
 
 
 	t->file->text = NULL;
-	FILE *fp = fopen(path, "r");
+	FILE *fp = fopen(path, "rb");
 
 	if(!fp){
 		t->file->text = malloc(1);
@@ -3622,7 +3622,7 @@ void Thoth_Editor_Init(Thoth_Editor *t,Thoth_Config *cfg){
 	InitCursors(t);
 	Thoth_FileBrowser_Init(&t->fileBrowser);
 
-	FILE *fp = fopen(THOTH_LOGFILE, "r");
+	FILE *fp = fopen(THOTH_LOGFILE, "rb");
 	if(fp){
 		fseek(fp, 0, SEEK_END);
 		int len = ftell(fp);

@@ -290,23 +290,27 @@ void Thoth_Config_Read(Thoth_Config *cfg){
 
 	cfg->tabs = DEFAULT_TAB_WIDTH;
 
-	FILE *fp = fopen(THOTH_CONFIG_FILE,"rb");
+	FILE *fp = fopen(THOTH_CONFIG_FILE,"r");
 	if(!fp) return;
-	void *stack = malloc(2048<<2);
-	void *stackEnd = stack + (2048<<2);
-	JSON_Value *top;
 	fseek(fp,0,SEEK_END);
 	int len = ftell(fp);
 
 	rewind(fp);
 	char *memory = malloc(len+1);
+	void *stack = malloc(len*4);
+	void *stackEnd = stack + (len*4);
+	JSON_Value *top = NULL;
 	fread(memory,1,len,fp);
-		
+	fclose(fp);
+
 	JSON_Parse(&top,memory,len,stack,stackEnd,16);
+
 
 	JSON_Dump(top,4);
 	ConfigRead(top, cfg);	
 
-	free(stack);
+	
+			free(memory);
+		free(stack);
 
 }
