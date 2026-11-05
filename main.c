@@ -291,6 +291,7 @@ int main(int argc, char **argv){
 		for(k = 0; k < argc-1; k++)
 			Thoth_Editor_LoadFile(&t.te, argv[1+k]);
 	}
+
 	else if(t.te.nFiles == 0)
 		Thoth_Editor_LoadFile(&t.te, NULL);
 
@@ -368,4 +369,4 @@ int main(int argc, char **argv){
 	Window_Close();
 	return 0;
 }
-#endif,
+#endif

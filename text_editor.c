@@ -2696,7 +2696,6 @@ static void AutoComplete(Thoth_Editor *t){
 					!IsToken(t->file->text[findEnd+res+j]); j++){
 				}
 
-
 				int m;
 				for(m = 0; m < t->autoCompleteLen; m++){
 					if(t->autoComplete[m].len == j && 
@@ -2709,8 +2708,6 @@ static void AutoComplete(Thoth_Editor *t){
 					findEnd += res + j;
 					continue;
 				}
-
-
 
 				t->autoComplete[t->autoCompleteLen].offset = findEnd+res;
 				t->autoComplete[t->autoCompleteLen].len = j;
@@ -3344,18 +3341,15 @@ static void FreeFile(Thoth_EditorFile *f){
 
 static Thoth_EditorFile *CreateTextEditorFile(char *path){
 	Thoth_EditorFile *ret = (Thoth_EditorFile *)malloc(sizeof(Thoth_EditorFile));
+
 	memset(ret, 0, sizeof(Thoth_EditorFile));
+
 	if(path != NULL){
 		strcpy(ret->path, path);
+		
 		int k = strlen(path);
 		for(; k >= 0; k--){
-#ifdef LINUX_COMPILE
-			if(path[k] == '/'){
-#elif WINDOWS_API_COMPILE
-			if(path[k] == '\\'){
-#else
-			if(path[k] == '/'){
-#endif
+			if(path[k] == '/' || path[k] == '\\'){
 				k++;
 				break;
 			}
@@ -3384,7 +3378,7 @@ void Thoth_Editor_LoadFile(Thoth_Editor *t, char *pathRel){
 
 	char path[MAX_PATH_LEN] = {0};
 #ifdef WINDOWS_COMPILE
-	GetFullPathName(pathRel, MAX_PATH_LEN, path, NULL);
+	_fullpath( path,pathRel, MAX_PATH_LEN);
 #endif
 #ifdef LINUX_COMPILE
 	char *tmp = realpath(pathRel, NULL);
@@ -3392,7 +3386,6 @@ void Thoth_Editor_LoadFile(Thoth_Editor *t, char *pathRel){
 		strcpy(path, tmp);
 		free(tmp);
 	}
-
 #endif
 
 	Thoth_EditorFile *file = CreateTextEditorFile(path);
@@ -3437,12 +3430,7 @@ void Thoth_Editor_LoadFile(Thoth_Editor *t, char *pathRel){
 #endif
 	int m;
 	for(m = strlen(path); m > 0; m--){
-#ifdef WINDOWS_COMPILE
-		if(path[m] == '\\') break;
-#endif
-#ifdef LINUX_COMPILE
-		if(path[m] == '/') break;
-#endif
+		if(path[m] == '\\' || path[m] == '/') break;
 	}
 
 	strncpy(t->fileBrowser.directory, path, m);

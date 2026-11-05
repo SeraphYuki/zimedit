@@ -2,8 +2,8 @@
 #define TYPES_DEF
 
 #include <stdint.h>
-#define MAX_PATH_LEN 512
-#define MAX_FILENAME 128
+#define MAX_PATH_LEN 4096
+#define MAX_FILENAME 4096
 #define ERROR 0
 #define SUCCESS 1
 
