@@ -161,7 +161,9 @@ void Event(Thoth_t *t){
 
 
 	} else if(ev.type == SDL_EVENT_TEXT_INPUT){
-		t->key = (t->key&0xFF00) | (ev.text.text[0] & 0xFF);
+		int key = t->key & THOTH_ENTER_KEY ? t->key ^ THOTH_ENTER_KEY : t->key;
+
+		t->key = (key&0xFF00) | (ev.text.text[0] & 0xFF);
 		t->state = THOTH_STATE_UPDATE;        
 
 
