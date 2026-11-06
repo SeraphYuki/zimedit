@@ -584,7 +584,7 @@ static void ResolveCursorCollisions(Thoth_Editor *t, int *cursorIndex){
 					((c1->selection.startCursorPos <= c2->selection.startCursorPos + 
 					c2->selection.len)
 						&& c1->selection.startCursorPos >= c2->selection.startCursorPos)) ||
-						 c1->pos == c2->pos){
+						c1->pos == c2->pos){
 
 						// absorb selection
 						if((c1->selection.startCursorPos < c2->selection.startCursorPos && (c2->selection.startCursorPos <= 
@@ -1334,7 +1334,7 @@ static void ExpandSelectionWords(Thoth_Editor *t,Thoth_EditorCmd *c){
 		
 		if(t->cursors[k].selection.len == 0 || 
 			(t->cursors[k].selection.startCursorPos+t->cursors[k].selection.len < t->cursors[k].pos
-		 && (t->cursors[k].selection.dir < 0)) || 
+		&& (t->cursors[k].selection.dir < 0)) || 
 			(t->cursors[k].selection.startCursorPos > t->cursors[k].pos && (t->cursors[k].selection.dir >= 0)
 		)){
 			t->cursors[k].selection.startCursorPos = prev;
@@ -1594,7 +1594,7 @@ static void Paste(Thoth_Editor *t, Thoth_EditorCmd *c){
 	}
 	lines--;
 
-	 //if cursorpos is the same as number of tabs dont paste them
+	//if cursorpos is the same as number of tabs dont paste them
 	if(lines <= 1){
 
 		int charsInto = GetCharsIntoLine(t->file->text, t->cursors[0].pos);
@@ -1971,7 +1971,7 @@ static void ToggleCommentMulti(Thoth_Editor *t, Thoth_EditorCmd *c){
 	for(m = startSelection; m < endSelection; m++){
 		
 		while((t->file->text[m] == '\t' || t->file->text[m] == ' ')
-		 && m < endSelection) m++;
+		&& m < endSelection) m++;
 
 		if(t->file->text[m] == '\n') continue;
 
@@ -2066,7 +2066,7 @@ static void Comment(Thoth_Editor *t, Thoth_EditorCmd *c){
 			t->cursors[k].pos = lineStart;
 			int m = lineStart;
 			while((t->file->text[m] == '\t' || t->file->text[m] == ' ')
-			 && m < lineEnd) m++;
+			&& m < lineEnd) m++;
 			
 			t->cursors[k].pos = m;
 			AddStrToText(t, &k, "//");
@@ -2086,7 +2086,7 @@ static void Comment(Thoth_Editor *t, Thoth_EditorCmd *c){
 		for(m = startSelection; m < endSelection; m++){
 			
 			while((t->file->text[m] == '\t' || t->file->text[m] == ' ')
-			 && m < endSelection) m++;
+			&& m < endSelection) m++;
 			
 			if(t->file->text[m] == '\n') continue;
 			
@@ -2201,7 +2201,7 @@ static void SelectBrackets(Thoth_Editor *t, Thoth_EditorCmd *c){
 			
 			last--;
 			while(t->file->text[last] == '\t' || t->file->text[last] == ' '
-			 || t->file->text[last] == '\n') {cursor->selection.len--; last--;}
+			|| t->file->text[last] == '\n') {cursor->selection.len--; last--;}
 			cursor->pos = last;
 		}
 	}
@@ -2355,12 +2355,12 @@ static void X11Copy(Thoth_Editor *t){
 			memcpy(buffer, &t->file->text[start], end-start);
 		}
 
-		 //if(t->cursors[k].clipboard) free(t->cursors[k].clipboard);
+		//if(t->cursors[k].clipboard) free(t->cursors[k].clipboard);
 
-		 //t->cursors[k].clipboard = (char *)malloc((end-start) + 1);
-		 //t->cursors[k].clipboard[end-start] = 0;
+		//t->cursors[k].clipboard = (char *)malloc((end-start) + 1);
+		//t->cursors[k].clipboard[end-start] = 0;
 
-		 //memcpy(t->cursors[k].clipboard, &t->file->text[start], end-start);
+		//memcpy(t->cursors[k].clipboard, &t->file->text[start], end-start);
 	}
 	if(buffer){
 		if(t->clipboard) free(t->clipboard);
@@ -2519,7 +2519,7 @@ static void SaveCursors(Thoth_Editor *t, Thoth_EditorCmd *c){
 	int k;
 
 	for(k = 0; k < c->nSavedCursors; k++){
-		 PutsCursor(t, c->savedCursors[k]);
+		PutsCursor(t, c->savedCursors[k]);
 	}
 
 	if(c->savedCursors){
@@ -2983,7 +2983,7 @@ static void AddCharacters(Thoth_Editor *t, Thoth_EditorCmd *c){
 		int k;
 		for(k = into; k < t->cursors[0].pos; k++){
 			if(t->file->text[k] != '\t') break;
-			 tabs++;
+			tabs++;
 		}
 		if(k == t->cursors[0].pos && tabs > 0) {
 			int index = 0;
@@ -3261,8 +3261,8 @@ static void ExecuteCommand(Thoth_Editor *t, Thoth_EditorCmd *c){
 	for(k = 0; k < BufferExpandFuncsLen; k++){
 		if(BufferExpandFuncs[k] == c->Execute
 			&& t->lastCmd && (*t->lastCmd)->Execute == BufferExpandFuncs[k]
-			 && ( ( c->keys && !IsToken(c->keys[0]) && 
-			 lastKeys &&  lastLen > 0 && !IsToken((*lastKeys)[lastLen-1]))))
+			&& ( ( c->keys && !IsToken(c->keys[0]) && 
+			lastKeys &&  lastLen > 0 && !IsToken((*lastKeys)[lastLen-1]))))
 			{
 			if(c->keys){
 				(*t->lastCmd)->num = lastLen;
@@ -3461,24 +3461,42 @@ void Thoth_Editor_LoadFile(Thoth_Editor *t, char *pathRel){
 		}
 
 	}
-	for(k = 0; k < len-1; k++){
+	// convert spaces to tabs
+	
+	for(k = 0; k < len-1; ){
 		if(t->file->text[k] == '\n' || k == 0){
-			k++;
-			for( m = k; m < len-1 && m-k < t->cfg->tabs; m++){
-				if(t->file->text[m] != ' ') break;
-			}
-			if(m-k == t->cfg->tabs){
-				int x;
-				for(x = 0; x < t->cfg->tabs; x++){
+			if(k > 0) k++;
+			int tabs = 0;
+			while((t->file->text[k] == ' ' || 
+				t->file->text[k] == '\t') && k < len){
+				
+				if(t->file->text[k] == '\t'){
+					k++;
+					tabs = 0;
+					continue;
+				}
+				if(tabs == t->cfg->tabs){
+					t->file->text[k] = '\t';
+					k++;
+					tabs = 0;
+				} else {
 					for( m = k; m < len-1; m++){
-						t->file->text[m] = t->file->text[m+1];
+						t->file->text[m] = t->file->text[m+1]; 
 					}
 					len--;
+					tabs++;
+					
 				}
-				t->file->text[k] = '\t'; 
 			}
+			if(k == 0 && tabs == 0) k++;
+		} else {
+			k++;
 		}
 	}
+
+
+
+
 	t->file->text[len] = 0;
 
 	t->file->textLen = len;
@@ -3737,7 +3755,7 @@ static int CursorPos(Thoth_Editor *t, int x, int y){
 		lx -= k;
 
 		if(x > lx){
-			 x = lx;
+			x = lx;
 		}
 	}
 
@@ -3844,7 +3862,7 @@ int Thoth_mvprintw(HDC hdcMem,int x, int y, char *str, int len){
 		m++;
 	}
 
-    SelectObject(hdcMem, Config_GetFont());
+		SelectObject(hdcMem, Config_GetFont());
 	TextOut(hdcMem, x*Config_GetWidth(), y*Config_GetHeight(),buffer, strlen(buffer));
 
 
@@ -3856,8 +3874,8 @@ void move(int x, int y){
 void Thoth_clrtoeol(HDC hdcMem){
 }
 void Thoth_attron(HDC hdcMem, int color){
-	  SetTextColor(hdcMem, (COLORREF){Config_GetColor(color, 0)});
-	  SetBkColor(hdcMem, (COLORREF){Config_GetColor(color, 1)});
+	SetTextColor(hdcMem, (COLORREF){Config_GetColor(color, 0)});
+	SetBkColor(hdcMem, (COLORREF){Config_GetColor(color, 1)});
 }
 #endif
 
@@ -4167,23 +4185,23 @@ void Thoth_Editor_Draw(Thoth_Editor *t){
 		char token = IsToken(c);
 		if(!token){
 
-		   if((k - ctOffset) == 1 && IsDigit(text[k-1])){
+			if((k - ctOffset) == 1 && IsDigit(text[k-1])){
 
 				if(text[k] == 'x')
-				   for(++k; k < renderTo && IsHexadecimal(text[k]); k++);
-			   else 
-				   for(; k < renderTo && IsDigit(text[k]); k++);
+					for(++k; k < renderTo && IsHexadecimal(text[k]); k++);
+				else 
+					for(; k < renderTo && IsDigit(text[k]); k++);
 
-			   Thoth_attron(hdcMem,(THOTH_COLOR_NUM));
-			   Thoth_mvprintw(hdcMem, t->logX+x, t->logY+y, &text[ctOffset], k - ctOffset);
-			   x += k - ctOffset;
-			   ctOffset = k;
+				Thoth_attron(hdcMem,(THOTH_COLOR_NUM));
+				Thoth_mvprintw(hdcMem, t->logX+x, t->logY+y, &text[ctOffset], k - ctOffset);
+				x += k - ctOffset;
+				ctOffset = k;
 
-			   continue;
-		   }
+				continue;
+			}
 
-		   k++;
-		   // add to temp str
+			k++;
+			// add to temp str
 
 		} else {
 			if(k - ctOffset > 0){
@@ -4505,13 +4523,13 @@ void Thoth_Editor_Draw(Thoth_Editor *t){
 #else
 
 #ifdef WINDOWS_API_COMPILE
-	  BitBlt(ps.hdc, cliRect.left, cliRect.top, cliRect.right-cliRect.left, cliRect.bottom - cliRect.top, hdcMem, 0, 0, SRCCOPY);
-	  SelectObject(hdcMem, hbmOld);
+	BitBlt(ps.hdc, cliRect.left, cliRect.top, cliRect.right-cliRect.left, cliRect.bottom - cliRect.top, hdcMem, 0, 0, SRCCOPY);
+	SelectObject(hdcMem, hbmOld);
 
 
-	  DeleteObject(hbmMem);
-	  DeleteDC(hdcMem);
-	  EndPaint(hwnd, &ps);
+	DeleteObject(hbmMem);
+	DeleteDC(hdcMem);
+	EndPaint(hwnd, &ps);
 #elif LINUX_COMPILE
 	wrefresh(stdscr);
 #endif
@@ -4595,51 +4613,51 @@ void Thoth_Editor_Event(Thoth_Editor *t, unsigned int key){
 	
 			chdir(t->fileBrowser.directory);
 			// char *logpath = THOTH_LOGCOMPILEFILE;
-		    char cmdbuffer[512]; 
+			char cmdbuffer[512]; 
 			printf("\033[H\033[2J");
-		    sprintf(cmdbuffer, "%s",t->cfg->makecmd);
+			sprintf(cmdbuffer, "%s",t->cfg->makecmd);
 #ifndef SDL_COMPILE
 			endwin();
 #endif
-		    if(t->loggingText) free(t->loggingText);
-		    t->loggingText = NULL;
+			if(t->loggingText) free(t->loggingText);
+			t->loggingText = NULL;
 
-		    FILE *fp = popen(cmdbuffer, "r");
-		    int len = 0;
-			  while (fgets(cmdbuffer, 512, fp) != NULL) {
-			      printf("%s", cmdbuffer);
+				FILE *fp = popen(cmdbuffer, "r");
+			int len = 0;
+			while (fgets(cmdbuffer, 512, fp) != NULL) {
+					printf("%s", cmdbuffer);
 
-			      int bufferLen = strlen(cmdbuffer);
-			      t->loggingText = realloc(t->loggingText, len+bufferLen+1);
-			      memcpy(&t->loggingText[len], cmdbuffer, bufferLen);
-			      len += bufferLen;
+						int bufferLen = strlen(cmdbuffer);
+					t->loggingText = realloc(t->loggingText, len+bufferLen+1);
+					memcpy(&t->loggingText[len], cmdbuffer, bufferLen);
+					len += bufferLen;
 					t->loggingText[len] = 0;
 
-			  }
+				}
 #endif
 #ifdef WINDOWS_API_COMPILE
 		
 			chdir(t->fileBrowser.directory);
 			// char *logpath = THOTH_LOGCOMPILEFILE;
-		    char cmdbuffer[512]; 
-		    sprintf(cmdbuffer, "cmd.exe /c %s",t->cfg->makecmd);
+			char cmdbuffer[512]; 
+			sprintf(cmdbuffer, "cmd.exe /c %s",t->cfg->makecmd);
 
-		    if(t->loggingText) free(t->loggingText);
-		    t->loggingText = NULL;
+				if(t->loggingText) free(t->loggingText);
+			t->loggingText = NULL;
 
-		    FILE *fp = popen(cmdbuffer, "r");
-		    int len = 0;
-			  while (fgets(cmdbuffer, 512, fp) != NULL) {
-			      printf("%s", cmdbuffer);
+				FILE *fp = popen(cmdbuffer, "r");
+			int len = 0;
+			while (fgets(cmdbuffer, 512, fp) != NULL) {
+					printf("%s", cmdbuffer);
 
-			      int bufferLen = strlen(cmdbuffer);
-			      t->loggingText = realloc(t->loggingText, len+bufferLen+1);
-			      memcpy(&t->loggingText[len], cmdbuffer, bufferLen);
-			      len += bufferLen;
+						int bufferLen = strlen(cmdbuffer);
+					t->loggingText = realloc(t->loggingText, len+bufferLen+1);
+					memcpy(&t->loggingText[len], cmdbuffer, bufferLen);
+					len += bufferLen;
 					t->loggingText[len] = 0;
 
-			  }
-		    pclose(fp); // Use _pclose on Windows
+				}
+			pclose(fp); // Use _pclose on Windows
 
 	// windows broken			
 			StartLogging(t, THOTH_LOGMODE_CONSOLE);
